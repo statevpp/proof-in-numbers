@@ -114,6 +114,6 @@ jobs:
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-          # "private" until the YouTube API Audit is approved (Day 1 of the
-          # plan) — then switch this to "public" and manual publishing ends.
-          YOUTUBE_PRIVACY_STATUS: "private"
+          # Public uploads, per owner's decision (2026-09-04) — do not
+          # revert to "private" without being asked.
+          YOUTUBE_PRIVACY_STATUS: "public"
