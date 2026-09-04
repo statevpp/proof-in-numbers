@@ -21,10 +21,12 @@ approved, change PRIVACY_STATUS below to "public" and the manual weekly
 """
 import json
 import os
+import sys
 
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
 PRIVACY_STATUS = os.environ.get("YOUTUBE_PRIVACY_STATUS", "private")
@@ -86,11 +88,25 @@ def main():
     video_id = response["id"]
     print(f"[upload_youtube] Uploaded video id: {video_id} (privacyStatus={PRIVACY_STATUS})")
 
-    # Thumbnail must be set as a separate call, after the video exists.
-    youtube.thumbnails().set(
-        videoId=video_id, media_body=MediaFileUpload("output/thumbnail.png")
-    ).execute()
-    print("[upload_youtube] Thumbnail set.")
+    # Thumbnail must be set as a separate call, after the video exists. This
+    # is allowed to fail without failing the whole run: custom thumbnails
+    # require a phone-verified YouTube channel, and even right after
+    # verifying, Google can take a while to propagate that permission to the
+    # API. The video itself has already been published successfully at this
+    # point, so a thumbnail hiccup should never block the daily pipeline —
+    # worst case, that day's video keeps YouTube's auto-generated thumbnail
+    # and a later run's thumbnail call succeeds once permissions catch up.
+    try:
+        youtube.thumbnails().set(
+            videoId=video_id, media_body=MediaFileUpload("output/thumbnail.png")
+        ).execute()
+        print("[upload_youtube] Thumbnail set.")
+    except HttpError as exc:
+        print(
+            f"[upload_youtube] WARNING: could not set custom thumbnail "
+            f"(video {video_id} was still published successfully): {exc}",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":
