@@ -113,6 +113,13 @@ jobs:
 
       - name: Render chart
         run: python3 scripts/render_chart.py
+        env:
+          # Selects which of the 4 visual templates this matrix job's
+          # video gets (paired with pillar) — see render_chart.py's
+          # TEMPLATE_BY_SLOT docstring. Without this, every job would fall
+          # back to the same "line" template and today's 4 videos would
+          # look identical again, defeating the whole point of SLOT here.
+          SLOT: ${{ matrix.slot }}
 
       - name: Generate voice
         run: python3 scripts/generate_voice.py
