@@ -8,6 +8,24 @@ The channel has exactly two content pillars (see 00_Project_Overview.md):
 - "money" -> "Money in Your Life"       (World Bank Open Data)
 - "life"  -> "Your Life by the Numbers" (World Bank + Our World in Data)
 
+The channel publishes FOUR Shorts a day — two per pillar (see daily-short.yml,
+which runs this whole pipeline as a 4-way matrix: money/1, money/2, life/1,
+life/2). Two env vars, both optional, control that:
+
+- FORCE_PILLAR ("money" or "life") — restricts every candidate this run
+  considers to that one pillar, instead of picking randomly across both.
+- SLOT ("1" or "2") — splits COUNTRY_POOL into two disjoint halves (even vs
+  odd entries) so that the two same-pillar runs on the same day can never
+  land on the same country, even though each matrix job's random state is
+  otherwise completely independent of the other's. This is a cheap,
+  deterministic way to guarantee two visibly different videos per pillar per
+  day without any cross-job coordination (each matrix job is a separate,
+  isolated GitHub Actions runner with no shared state).
+
+Leaving both env vars unset reproduces the original single-video-per-day
+behaviour exactly (fully random pillar + full country pool) — kept for local
+testing / manual one-off runs.
+
 Every candidate carries a "pillar" tag and a "framing_hint" string that tells
 generate_script.py how to translate the raw number into something a regular
 person feels in 3 seconds (money in their pocket, hours in their week, years
@@ -199,13 +217,47 @@ def _finish_candidate(country_iso2: str, spec: dict, series, pillar: str, source
 
 
 def build_candidates(n: int = 8):
-    """Pull n random candidates across both pillars that actually have data."""
+    """Pull n random candidates that actually have data.
+
+    FORCE_PILLAR ("money"/"life") restricts which pillar's pools are drawn
+    from — used by the 4-videos-a-day matrix in daily-short.yml so each
+    matrix job produces a video for its assigned pillar instead of a random
+    one. SLOT ("1"/"2") splits COUNTRY_POOL into two disjoint halves (even
+    vs odd dict entries) so the two same-pillar matrix jobs running the same
+    day can never both land on the same country — a cheap way to guarantee
+    two visibly different videos per pillar per day without any
+    coordination between the (fully independent) matrix job runners.
+
+    Both env vars are optional; leaving them unset reproduces the original
+    fully-random, full-country-pool behaviour (one video/day, either
+    pillar) — kept for local testing and manual one-off runs.
+    """
     candidates = []
     attempts = 0
+
+    force_pillar = os.environ.get("FORCE_PILLAR", "").strip().lower() or None
+    slot = os.environ.get("SLOT", "").strip()
+
+    country_items = list(COUNTRY_POOL.items())
+    if slot == "1":
+        country_items = country_items[0::2]
+    elif slot == "2":
+        country_items = country_items[1::2]
+
+    if force_pillar or slot:
+        print(f"[fetch_stat] FORCE_PILLAR={force_pillar!r} SLOT={slot!r} "
+              f"-> country pool size {len(country_items)}")
+
     while len(candidates) < n and attempts < n * 5:
         attempts += 1
-        country_iso2, country_iso3 = random.choice(list(COUNTRY_POOL.items()))
-        pool_choice = random.choice(["money", "life_wb", "life_owid"])
+        country_iso2, country_iso3 = random.choice(country_items)
+
+        if force_pillar == "money":
+            pool_choice = "money"
+        elif force_pillar == "life":
+            pool_choice = random.choice(["life_wb", "life_owid"])
+        else:
+            pool_choice = random.choice(["money", "life_wb", "life_owid"])
 
         try:
             if pool_choice == "money":
@@ -268,10 +320,10 @@ def main():
     # brand-new machine, so without this check a failed later step (e.g.
     # assemble_video.sh) would cause a retry to re-roll a DIFFERENT random
     # stat here, making the video inconsistent across debugging attempts.
-    # daily-short.yml caches this "data" dir keyed by today's date only (no
-    # restore-keys fallback — this repo's paths are NOT date-namespaced like
-    # the sibling Lumaris pipeline's are, so a stale prior day's cache must
-    # never be allowed to satisfy this check).
+    # daily-short.yml caches this "data" dir keyed by date + pillar + slot
+    # (no restore-keys fallback — this repo's paths are NOT date-namespaced
+    # like the sibling Lumaris pipeline's are, so a stale prior day's — or
+    # prior slot's — cache must never be allowed to satisfy this check).
     if os.path.exists("data/today_stat.json"):
         print("[fetch_stat] data/today_stat.json already exists for today "
               "(restored from cache) — skipping re-fetch.")
