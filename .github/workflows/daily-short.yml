@@ -8,6 +8,25 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    # Four videos a day — two per content pillar (see 00_Project_Overview.md
+    # and fetch_stat.py's FORCE_PILLAR/SLOT docstring). Each matrix
+    # combination is its own fully isolated GitHub Actions runner, so the
+    # four videos never share a filesystem or step outputs with each other —
+    # only the cache key below needs to tell them apart.
+    # fail-fast: false so one pillar/slot failing (e.g. a bad Gemini call)
+    # doesn't cancel the other three videos for the day.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - pillar: money
+            slot: "1"
+          - pillar: money
+            slot: "2"
+          - pillar: life
+            slot: "1"
+          - pillar: life
+            slot: "2"
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -27,12 +46,14 @@ jobs:
         # three scripts each skip their work if their output file already
         # exists (see the comments in fetch_stat.py's main()).
         #
-        # Keyed by UTC date ONLY (no run_id, no restore-keys fallback) —
+        # Keyed by UTC date + pillar + slot (no restore-keys fallback) —
         # unlike the sibling Lumaris pipeline, this repo's cached paths
         # (data/, audio/, assets/) are NOT namespaced by date, so falling
         # back to a partial-match key could silently restore a PREVIOUS
-        # day's stat/script/voice files under these exact same paths and the
-        # skip-logic above would then wrongly reuse them. An exact-key-only
+        # day's — or a DIFFERENT matrix job's — stat/script/voice files
+        # under these exact same paths and the skip-logic above would then
+        # wrongly reuse them. The pillar+slot part of the key is what keeps
+        # today's four videos from colliding with each other; an exact-key
         # cache miss on the first run of a new day is the safe default: it
         # just means everything regenerates fresh, which is what should
         # happen anyway.
@@ -42,7 +63,7 @@ jobs:
             data
             audio
             assets
-          key: daily-short-${{ steps.date.outputs.today }}
+          key: daily-short-${{ steps.date.outputs.today }}-${{ matrix.pillar }}-${{ matrix.slot }}
 
       - name: Install ffmpeg
         # ubuntu-latest does NOT ship ffmpeg by default — confirmed failure
@@ -79,6 +100,11 @@ jobs:
         run: python3 scripts/fetch_stat.py
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Pins this matrix job to its assigned pillar and disjoint
+          # country-pool half — see fetch_stat.py's build_candidates()
+          # docstring for exactly what these do.
+          FORCE_PILLAR: ${{ matrix.pillar }}
+          SLOT: ${{ matrix.slot }}
 
       - name: Generate script (+ automatic fact self-check)
         run: python3 scripts/generate_script.py
@@ -99,7 +125,7 @@ jobs:
       - name: Upload video artifact (always, for manual review/backup)
         uses: actions/upload-artifact@v4
         with:
-          name: daily-short-${{ steps.date.outputs.today }}
+          name: daily-short-${{ steps.date.outputs.today }}-${{ matrix.pillar }}-${{ matrix.slot }}
           path: |
             output/short.mp4
             output/thumbnail.png
