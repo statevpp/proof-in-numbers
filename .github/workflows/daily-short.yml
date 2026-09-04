@@ -1,0 +1,119 @@
+name: Proof in Numbers — Daily Short
+
+on:
+  schedule:
+    - cron: "0 7 * * *"   # 07:00 UTC daily — adjust to your preferred posting time
+  workflow_dispatch: {}     # lets you click "Run workflow" manually for testing
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set date output
+        # Must run BEFORE the cache step below — its key references
+        # steps.date.outputs.today, which is empty until this step has run.
+        id: date
+        run: echo "today=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache today's paid API outputs (avoid re-billing on retries)
+        # GitHub Actions runners are ephemeral — without this, a failed retry
+        # (or a second manual "Run workflow" the same day) regenerates and
+        # re-pays for the Gemini calls in fetch_stat.py / generate_script.py /
+        # generate_voice.py from scratch, and could even pick a DIFFERENT
+        # random stat, making the video inconsistent across attempts. Those
+        # three scripts each skip their work if their output file already
+        # exists (see the comments in fetch_stat.py's main()).
+        #
+        # Keyed by UTC date ONLY (no run_id, no restore-keys fallback) —
+        # unlike the sibling Lumaris pipeline, this repo's cached paths
+        # (data/, audio/, assets/) are NOT namespaced by date, so falling
+        # back to a partial-match key could silently restore a PREVIOUS
+        # day's stat/script/voice files under these exact same paths and the
+        # skip-logic above would then wrongly reuse them. An exact-key-only
+        # cache miss on the first run of a new day is the safe default: it
+        # just means everything regenerates fresh, which is what should
+        # happen anyway.
+        uses: actions/cache@v4
+        with:
+          path: |
+            data
+            audio
+            assets
+          key: daily-short-${{ steps.date.outputs.today }}
+
+      - name: Install ffmpeg
+        # ubuntu-latest does NOT ship ffmpeg by default — confirmed failure
+        # mode in the Lumaris pipeline (exit 127, "command not found").
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Make scripts executable
+        # Executable bit is lost on git upload if not set explicitly — same
+        # trap hit in the Lumaris pipeline (EACCES on assemble script).
+        run: chmod +x scripts/assemble_video.sh
+
+      # IMPORTANT: none of the four steps below set `working-directory:
+      # scripts`, even though the .py files live in scripts/. All of them
+      # write/read paths like "data/...", "audio/...", "assets/..." relative
+      # to the process's CWD (NOT relative to the script's own location) —
+      # and assemble_video.sh, the artifact upload, and upload_youtube.py all
+      # expect those directories at the REPO ROOT. Running with
+      # `working-directory: scripts` would make each script create its own
+      # "scripts/data/", "scripts/audio/", "scripts/assets/" instead, so the
+      # "Assemble video" step below would immediately fail with "Missing
+      # required input file(s)". Running `python3 scripts/<file>.py` from
+      # the repo root avoids this — Python still finds the sibling
+      # `google_genai_helper.py` import fine, because it adds the script's
+      # own directory to sys.path automatically regardless of CWD.
+      - name: Fetch today's stat
+        run: python3 scripts/fetch_stat.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Generate script (+ automatic fact self-check)
+        run: python3 scripts/generate_script.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Render chart
+        run: python3 scripts/render_chart.py
+
+      - name: Generate voice
+        run: python3 scripts/generate_voice.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Assemble video + thumbnail (+ automatic technical self-check)
+        run: ./scripts/assemble_video.sh .
+
+      - name: Upload video artifact (always, for manual review/backup)
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-short-${{ steps.date.outputs.today }}
+          path: |
+            output/short.mp4
+            output/thumbnail.png
+            data/script.json
+            data/today_stat.json
+          retention-days: 14
+
+      - name: Publish to YouTube
+        working-directory: .
+        run: python3 scripts/upload_youtube.py
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          # "private" until the YouTube API Audit is approved (Day 1 of the
+          # plan) — then switch this to "public" and manual publishing ends.
+          YOUTUBE_PRIVACY_STATUS: "private"
