@@ -5,6 +5,21 @@ on:
     - cron: "0 7 * * *"   # 07:00 UTC daily — adjust to your preferred posting time
   workflow_dispatch: {}     # lets you click "Run workflow" manually for testing
 
+# Prevents two overlapping runs of this workflow (e.g. a late scheduled run
+# colliding with a watchdog- or human-triggered workflow_dispatch a minute
+# or two apart) from both missing each other's actions/cache write and
+# uploading a duplicate video. Without this, the existing per-pillar/slot
+# cache + upload marker (see the "Cache today's..." and "Publish to
+# YouTube" steps below) only closes the gap when the two runs are far
+# enough apart for the first to finish and its cache to be saved before the
+# second starts — true so far by luck of timing, not by guarantee. This
+# queues a second run instead of letting it start in parallel;
+# cancel-in-progress stays false so a run already publishing videos is
+# never killed mid-upload.
+concurrency:
+  group: daily-short-pipeline
+  cancel-in-progress: false
+
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
@@ -150,3 +165,59 @@ jobs:
           # Public uploads, per owner's decision (2026-09-04) — do not
           # revert to "private" without being asked.
           YOUTUBE_PRIVACY_STATUS: "public"
+
+  # Runs once, AFTER all four matrix jobs above (whether they all succeeded
+  # or not — if: always() — so a single failed pillar/slot never loses the
+  # other three's picks). Deliberately a separate, single job rather than a
+  # step inside the matrix: four parallel jobs each committing the same
+  # recency_history.json would race each other's git push. One serial job
+  # reading all four jobs' uploaded artifacts avoids that entirely. See
+  # scripts/record_recency.py and fetch_stat.py's RECENCY_FILE section for
+  # the full mechanism (steers future days away from repeating the same
+  # country for the same pillar — see 2026-09-07 monitoring notes).
+  record-recency:
+    needs: build-and-publish
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set date output
+        id: date
+        run: echo "today=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Download today's per-pillar/slot artifacts
+        # continue-on-error: if every matrix job failed before its "Upload
+        # video artifact" step, there is nothing to download — that's a bad
+        # day for the channel, but must never fail THIS job on top of it.
+        # record_recency.py handles a missing/empty directory gracefully.
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: daily-short-${{ steps.date.outputs.today }}-*
+          path: today-artifacts
+
+      - name: Update recency_history.json
+        run: python3 scripts/record_recency.py "${{ steps.date.outputs.today }}" today-artifacts
+
+      - name: Commit and push if changed
+        # git diff alone would miss this file the very first time it's
+        # created (a brand-new file is untracked, not "modified", so `git
+        # diff` sees nothing to compare) — git status catches both cases.
+        run: |
+          if [ -z "$(git status --porcelain -- recency_history.json)" ]; then
+            echo "No recency changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add recency_history.json
+          git commit -m "chore: record ${{ steps.date.outputs.today }} country/pillar picks for recency exclusion"
+          # --rebase guards against an unrelated commit having landed on
+          # main between this job's checkout and this push (rare, but this
+          # job has no other reason to ever fail).
+          git pull --rebase origin main
+          git push

@@ -145,6 +145,58 @@ COUNTRY_POOL = {
     "CA": "CAN", "TR": "TUR", "PL": "POL", "EG": "EGY", "VN": "VNM",
 }
 
+# ---------------------------------------------------------------------------
+# Recency exclusion — avoids picking the same country for the same pillar on
+# back-to-back days (confirmed in practice: Turkey/inflation picked two days
+# running, 2026-09-06 and 2026-09-07 — different numbers each time, but a
+# repeat from the viewer's perspective). The workflow's "record-recency" job
+# (see .github/workflows/daily-short.yml) appends one entry per published
+# video to this file and commits it back to the repo after each day's runs,
+# so every matrix job starts from yesterday's (and earlier days') picks
+# already checked out fresh from git — no coordination between jobs needed.
+#
+# This file lives at the repo root, NOT inside data/, so it is never touched
+# by the actions/cache step (which only restores data/, audio/, assets/,
+# keyed by date+pillar+slot) — it is purely git-tracked history, unrelated
+# to a single day's ephemeral cache.
+# ---------------------------------------------------------------------------
+RECENCY_FILE = "recency_history.json"
+RECENCY_WINDOW_DAYS = 7
+
+
+def load_recency_history():
+    """Best-effort read of the recency log. Any problem (missing file,
+    corrupt JSON, wrong shape) must never block the pipeline — it just means
+    no exclusion happens this run, same as before this feature existed."""
+    if not os.path.exists(RECENCY_FILE):
+        return []
+    try:
+        with open(RECENCY_FILE, "r", encoding="utf-8") as f:
+            history = json.load(f)
+        if not isinstance(history, list):
+            return []
+        return history
+    except Exception as exc:  # noqa: BLE001 - must never block the pipeline
+        print(f"[fetch_stat] Could not read {RECENCY_FILE}, ignoring: {exc}", file=sys.stderr)
+        return []
+
+
+def recently_used_countries(history, window_days=RECENCY_WINDOW_DAYS):
+    """Returns the set of (pillar, country_iso2) pairs used within the last
+    `window_days` days, so build_candidates() can steer away from them."""
+    import datetime as _dt
+
+    today = _dt.datetime.now(_dt.timezone.utc).date()
+    used = set()
+    for entry in history:
+        try:
+            entry_date = _dt.date.fromisoformat(entry["date"])
+            if (today - entry_date).days <= window_days:
+                used.add((entry["pillar"], entry["country"]))
+        except Exception:  # noqa: BLE001 - one bad entry must never block the pipeline
+            continue
+    return used
+
 
 def fetch_worldbank_series(country_code: str, indicator: str, years: int = 12):
     """World Bank API: no API key, no rate limit for this volume."""
@@ -216,7 +268,7 @@ def _finish_candidate(country_iso2: str, spec: dict, series, pillar: str, source
     }
 
 
-def build_candidates(n: int = 8):
+def build_candidates(n: int = 8, exclude: set | None = None):
     """Pull n random candidates that actually have data.
 
     FORCE_PILLAR ("money"/"life") restricts which pillar's pools are drawn
@@ -228,10 +280,16 @@ def build_candidates(n: int = 8):
     two visibly different videos per pillar per day without any
     coordination between the (fully independent) matrix job runners.
 
+    `exclude` is an optional set of (pillar, country_iso2) pairs to steer
+    away from (see recently_used_countries()) — a candidate landing on one
+    of these is simply skipped and another attempt made, so it only ever
+    narrows the choice, never fails the run.
+
     Both env vars are optional; leaving them unset reproduces the original
     fully-random, full-country-pool behaviour (one video/day, either
     pillar) — kept for local testing and manual one-off runs.
     """
+    exclude = exclude or set()
     candidates = []
     attempts = 0
 
@@ -251,6 +309,19 @@ def build_candidates(n: int = 8):
     while len(candidates) < n and attempts < n * 5:
         attempts += 1
         country_iso2, country_iso3 = random.choice(country_items)
+
+        # Figure out which pillar this attempt would land on BEFORE doing
+        # any network fetch, so a recently-used (pillar, country) pair can
+        # be skipped cheaply instead of wasting a real API call on data
+        # we're going to throw away anyway.
+        if force_pillar == "money":
+            likely_pillar = "money"
+        elif force_pillar == "life":
+            likely_pillar = "life"
+        else:
+            likely_pillar = None  # unknown until pool_choice below
+        if likely_pillar and (likely_pillar, country_iso2) in exclude:
+            continue
 
         if force_pillar == "money":
             pool_choice = "money"
@@ -277,6 +348,10 @@ def build_candidates(n: int = 8):
             continue
 
         if not series or len(series) < 3:
+            continue
+        if (pillar, country_iso2) in exclude:
+            # Only reachable when force_pillar was unset (the likely_pillar
+            # check above already caught the forced-pillar case pre-fetch).
             continue
         candidates.append(_finish_candidate(country_iso2, spec, series, pillar, source))
 
@@ -329,7 +404,19 @@ def main():
               "(restored from cache) — skipping re-fetch.")
         return
 
-    candidates = build_candidates(n=8)
+    exclude = recently_used_countries(load_recency_history())
+    if exclude:
+        print(f"[fetch_stat] Steering away from {len(exclude)} recently-used "
+              f"(pillar, country) pair(s) from the last {RECENCY_WINDOW_DAYS} days: {sorted(exclude)}")
+
+    candidates = build_candidates(n=8, exclude=exclude)
+    if not candidates and exclude:
+        # Extremely unlikely with 20 countries x up to 9 indicators, but a
+        # video going out with a repeated country is always better than no
+        # video at all — never let the diversity feature block the pipeline.
+        print("[fetch_stat] No candidates left after recency exclusion — "
+              "retrying without it rather than failing the run.", file=sys.stderr)
+        candidates = build_candidates(n=8)
     if not candidates:
         print("[fetch_stat] No candidates fetched — all data sources failed.", file=sys.stderr)
         sys.exit(1)
