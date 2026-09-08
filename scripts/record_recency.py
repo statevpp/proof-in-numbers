@@ -60,12 +60,12 @@ def collect_todays_entries(date_str, artifacts_dir):
         try:
             with open(stat_path, "r", encoding="utf-8") as f:
                 stat = json.load(f)
-                entries.append({
-                    "date": date_str,
-                    "pillar": stat["pillar"],
-                    "country": stat["country"],
-                    "indicator_code": stat.get("indicator_code"),
-                })
+            entries.append({
+                "date": date_str,
+                "pillar": stat["pillar"],
+                "country": stat["country"],
+                "indicator_code": stat.get("indicator_code"),
+            })
         except Exception as exc:  # noqa: BLE001 - one bad artifact must never block the rest
             print(f"[record_recency] Skipping unreadable artifact {name!r}: {exc}", file=sys.stderr)
             continue
