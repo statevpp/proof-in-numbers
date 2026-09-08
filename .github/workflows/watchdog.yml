@@ -1,0 +1,85 @@
+name: Proof in Numbers — Watchdog
+
+# Replaces the Cowork/local-device scheduled task that used to watch for a
+# late or missing daily-short.yml run (trig_018DoNssPFSyZDs6iDdMkgJT,
+# retired — it required a live browser session on a specific computer to
+# fire, which defeats the point of an unattended pipeline). This workflow
+# runs entirely inside GitHub Actions: no laptop, browser, or Claude session
+# needs to be running for it to work.
+#
+# Observed reality (2026-09-05 through 2026-09-07): the 07:00 UTC schedule
+# trigger on daily-short.yml has never been silently skipped, but it has
+# been arriving later and later (+4h07m, +4h31m, +6h16m) — a documented
+# GitHub Actions behaviour under load on popular cron minutes, not a bug in
+# this repo. This workflow checks periodically through the morning and
+# manually fires daily-short.yml the moment it looks like today's run
+# hasn't started (or has already failed) on its own.
+
+on:
+  schedule:
+    # Every 20 minutes from 07:00 through 12:40 UTC. Chosen to comfortably
+    # cover the worst delay seen so far (+6h16m on 2026-09-07) with margin;
+    # widen the end of this range if a future day's schedule run arrives
+    # even later than that.
+    - cron: "0,20,40 7-12 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  actions: write
+
+jobs:
+  check-and-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check whether today's daily-short run is underway or done
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          today=$(date -u +%F)
+          curl -sf -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/actions/workflows/daily-short.yml/runs?per_page=20" \
+            -o runs.json
+          # Read the response from a file (not interpolated into the Python
+          # source as a string) so nothing in the JSON — quotes, backslashes,
+          # etc. — can break the shell/Python quoting.
+          status=$(TODAY="$today" python3 -c "
+          import json, os
+          with open('runs.json', encoding='utf-8') as f:
+              data = json.load(f)
+          today = os.environ['TODAY']
+          result = 'missing'
+          for r in data.get('workflow_runs', []):
+              if r.get('created_at', '')[:10] != today:
+                  continue
+              if r.get('status') in ('queued', 'in_progress'):
+                  result = 'underway'
+                  break
+              if r.get('status') == 'completed' and r.get('conclusion') == 'success':
+                  result = 'done'
+                  break
+          print(result)
+          ")
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "Today's daily-short.yml status: $status"
+
+      - name: Dispatch daily-short.yml (missing or failed run)
+        if: steps.check.outputs.status == 'missing'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          curl -sf -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/actions/workflows/daily-short.yml/dispatches" \
+            -d '{"ref":"main"}'
+          echo "No successful/in-progress run found for today — dispatched daily-short.yml."
+          echo "(Safe even if the scheduled run starts moments later: the"
+          echo "concurrency group in daily-short.yml queues one of the two,"
+          echo "and the per-pillar/slot upload marker still blocks any"
+          echo "actual duplicate video.)"
