@@ -1,0 +1,26 @@
+[
+  {
+    "date": "2026-09-09",
+    "pillar": "life",
+    "country": "BG",
+    "indicator_code": "happiness-cantril-ladder"
+  },
+  {
+    "date": "2026-09-09",
+    "pillar": "life",
+    "country": "IN",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-09",
+    "pillar": "money",
+    "country": "NG",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-09-09",
+    "pillar": "money",
+    "country": "TR",
+    "indicator_code": "FP.CPI.TOTL.ZG"
+  }
+]
