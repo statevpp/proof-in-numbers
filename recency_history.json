@@ -26,8 +26,20 @@
   {
     "date": "2026-09-10",
     "pillar": "life",
+    "country": "KR",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-10",
+    "pillar": "life",
     "country": "NG",
     "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-10",
+    "pillar": "money",
+    "country": "CN",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
   },
   {
     "date": "2026-09-10",
