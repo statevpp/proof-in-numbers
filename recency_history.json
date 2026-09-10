@@ -22,5 +22,17 @@
     "pillar": "money",
     "country": "TR",
     "indicator_code": "FP.CPI.TOTL.ZG"
+  },
+  {
+    "date": "2026-09-10",
+    "pillar": "life",
+    "country": "NG",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-10",
+    "pillar": "money",
+    "country": "IN",
+    "indicator_code": "SL.UEM.TOTL.ZS"
   }
 ]
