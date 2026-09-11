@@ -46,5 +46,29 @@
     "pillar": "money",
     "country": "IN",
     "indicator_code": "SL.UEM.TOTL.ZS"
+  },
+  {
+    "date": "2026-09-11",
+    "pillar": "life",
+    "country": "CN",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-11",
+    "pillar": "life",
+    "country": "ZA",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-11",
+    "pillar": "money",
+    "country": "CA",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-09-11",
+    "pillar": "money",
+    "country": "KR",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
   }
 ]
