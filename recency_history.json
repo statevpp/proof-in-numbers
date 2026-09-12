@@ -70,5 +70,29 @@
     "pillar": "money",
     "country": "KR",
     "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-09-12",
+    "pillar": "life",
+    "country": "EG",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-12",
+    "pillar": "life",
+    "country": "PL",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-12",
+    "pillar": "money",
+    "country": "BG",
+    "indicator_code": "NY.GDP.PCAP.CD"
+  },
+  {
+    "date": "2026-09-12",
+    "pillar": "money",
+    "country": "JP",
+    "indicator_code": "NY.GDP.PCAP.CD"
   }
 ]
