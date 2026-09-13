@@ -94,5 +94,29 @@
     "pillar": "money",
     "country": "JP",
     "indicator_code": "NY.GDP.PCAP.CD"
+  },
+  {
+    "date": "2026-09-13",
+    "pillar": "life",
+    "country": "MX",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-13",
+    "pillar": "life",
+    "country": "VN",
+    "indicator_code": "happiness-cantril-ladder"
+  },
+  {
+    "date": "2026-09-13",
+    "pillar": "money",
+    "country": "MX",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-09-13",
+    "pillar": "money",
+    "country": "US",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
   }
 ]
