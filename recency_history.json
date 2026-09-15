@@ -142,5 +142,29 @@
     "pillar": "money",
     "country": "SA",
     "indicator_code": "GC.TAX.TOTL.GD.ZS"
+  },
+  {
+    "date": "2026-09-15",
+    "pillar": "life",
+    "country": "AU",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-15",
+    "pillar": "life",
+    "country": "JP",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-15",
+    "pillar": "money",
+    "country": "AU",
+    "indicator_code": "NY.GDP.PCAP.CD"
+  },
+  {
+    "date": "2026-09-15",
+    "pillar": "money",
+    "country": "ZA",
+    "indicator_code": "SL.UEM.TOTL.ZS"
   }
 ]
