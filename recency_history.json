@@ -166,5 +166,29 @@
     "pillar": "money",
     "country": "ZA",
     "indicator_code": "SL.UEM.TOTL.ZS"
+  },
+  {
+    "date": "2026-09-16",
+    "pillar": "life",
+    "country": "BR",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-16",
+    "pillar": "life",
+    "country": "GB",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-16",
+    "pillar": "money",
+    "country": "EG",
+    "indicator_code": "SL.UEM.TOTL.ZS"
+  },
+  {
+    "date": "2026-09-16",
+    "pillar": "money",
+    "country": "PL",
+    "indicator_code": "NY.GDP.PCAP.CD"
   }
 ]
