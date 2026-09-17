@@ -21,7 +21,15 @@ on:
     # cover the worst delay seen so far (+6h16m on 2026-09-07) with margin;
     # widen the end of this range if a future day's schedule run arrives
     # even later than that.
-    - cron: "0,20,40 7-12 * * *"
+    # Shifted +5 min off :00/:20/:40 (was 0,20,40) on 2026-09-17 — confirmed
+    # real bug (09-16.09.2026): the old :00 tick coincided with daily-short.yml's
+    # own 07:00 UTC schedule minute, so this workflow's very first check of the
+    # day almost always raced the scheduled run and saw "missing" (nothing had
+    # been created in the API yet), and dispatched an unnecessary duplicate run —
+    # harmless in practice (upload_youtube.py's marker + this repo's cache key
+    # prevented a real duplicate video every time) but caused one confirmed real
+    # record-recency job failure via a git rebase conflict (run #20, 2026-09-10).
+    - cron: "5,25,45 7-12 * * *"
   workflow_dispatch: {}
 
 permissions:
