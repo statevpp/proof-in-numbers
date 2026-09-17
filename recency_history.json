@@ -190,5 +190,29 @@
     "pillar": "money",
     "country": "PL",
     "indicator_code": "NY.GDP.PCAP.CD"
+  },
+  {
+    "date": "2026-09-17",
+    "pillar": "life",
+    "country": "IN",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-17",
+    "pillar": "life",
+    "country": "TR",
+    "indicator_code": "annual-working-hours-per-worker"
+  },
+  {
+    "date": "2026-09-17",
+    "pillar": "money",
+    "country": "DE",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-09-17",
+    "pillar": "money",
+    "country": "GB",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
   }
 ]
