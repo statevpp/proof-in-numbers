@@ -1,0 +1,79 @@
+name: Proof in Numbers - Manual Content Experiment
+
+# ONE-OFF, MANUAL-ONLY workflow for a single approved content test (life-math
+# "years of your life" format), run exactly twice (once per variant) on
+# 2026-09-17 per explicit owner approval. Deliberately NOT on any schedule --
+# workflow_dispatch is the only trigger -- and deliberately separate from
+# daily-short.yml: it does not read fetch_stat.py, does not touch
+# recency_history.json, and is not part of the automated daily pipeline in
+# any way. See PROJECT8 audit notes (2026-09-17) for the full context.
+#
+# Content (hook/narration/title/description) is fixed and hardcoded below,
+# exactly as approved by the owner -- this workflow does NOT call Gemini to
+# write a script (skips generate_script.py entirely) to keep costs minimal
+# and to guarantee the published wording matches what was approved.
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: "Which experiment variant to publish"
+        required: true
+        type: choice
+        options:
+          - A
+          - B
+
+permissions:
+  contents: read
+
+jobs:
+  publish-experiment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Make scripts executable
+        run: chmod +x scripts/assemble_video.sh
+
+      - name: Write experiment content and render chart (variant ${{ inputs.variant }})
+        run: python3 scripts/experiment_life_math.py "${{ inputs.variant }}"
+
+      - name: Generate voice
+        run: python3 scripts/generate_voice.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Assemble video + thumbnail
+        run: ./scripts/assemble_video.sh .
+
+      - name: Upload video artifact (backup)
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-variant-${{ inputs.variant }}
+          path: |
+            output/short.mp4
+            output/thumbnail.png
+            data/script.json
+            data/today_stat.json
+          retention-days: 30
+
+      - name: Publish to YouTube
+        run: python3 scripts/upload_youtube.py
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_PRIVACY_STATUS: "public"
