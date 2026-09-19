@@ -238,5 +238,29 @@
     "pillar": "money",
     "country": "NG",
     "indicator_code": "NY.GDP.PCAP.CD"
+  },
+  {
+    "date": "2026-09-19",
+    "pillar": "life",
+    "country": "BG",
+    "indicator_code": "annual-working-hours-per-worker"
+  },
+  {
+    "date": "2026-09-19",
+    "pillar": "life",
+    "country": "ZA",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-19",
+    "pillar": "money",
+    "country": "TR",
+    "indicator_code": "FP.CPI.TOTL.ZG"
+  },
+  {
+    "date": "2026-09-19",
+    "pillar": "money",
+    "country": "VN",
+    "indicator_code": "NY.GDP.PCAP.CD"
   }
 ]
