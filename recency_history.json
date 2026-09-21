@@ -286,5 +286,29 @@
     "pillar": "money",
     "country": "JP",
     "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-09-21",
+    "pillar": "life",
+    "country": "CA",
+    "indicator_code": "happiness-cantril-ladder"
+  },
+  {
+    "date": "2026-09-21",
+    "pillar": "life",
+    "country": "MX",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-21",
+    "pillar": "money",
+    "country": "IN",
+    "indicator_code": "GC.TAX.TOTL.GD.ZS"
+  },
+  {
+    "date": "2026-09-21",
+    "pillar": "money",
+    "country": "MX",
+    "indicator_code": "SL.UEM.TOTL.ZS"
   }
 ]
