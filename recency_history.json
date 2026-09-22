@@ -314,6 +314,12 @@
   {
     "date": "2026-09-22",
     "pillar": "life",
+    "country": "EG",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-22",
+    "pillar": "life",
     "country": "SA",
     "indicator_code": "SP.DYN.LE00.IN"
   },
