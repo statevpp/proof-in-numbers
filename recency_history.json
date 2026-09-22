@@ -310,5 +310,23 @@
     "pillar": "money",
     "country": "MX",
     "indicator_code": "SL.UEM.TOTL.ZS"
+  },
+  {
+    "date": "2026-09-22",
+    "pillar": "life",
+    "country": "SA",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-22",
+    "pillar": "money",
+    "country": "KR",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-09-22",
+    "pillar": "money",
+    "country": "SA",
+    "indicator_code": "GC.TAX.TOTL.GD.ZS"
   }
 ]
