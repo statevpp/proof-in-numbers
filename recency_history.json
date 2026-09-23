@@ -334,5 +334,29 @@
     "pillar": "money",
     "country": "SA",
     "indicator_code": "GC.TAX.TOTL.GD.ZS"
+  },
+  {
+    "date": "2026-09-23",
+    "pillar": "life",
+    "country": "AU",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-23",
+    "pillar": "life",
+    "country": "JP",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-09-23",
+    "pillar": "money",
+    "country": "FR",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-09-23",
+    "pillar": "money",
+    "country": "ZA",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
   }
 ]
