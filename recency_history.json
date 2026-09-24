@@ -358,5 +358,29 @@
     "pillar": "money",
     "country": "ZA",
     "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-09-24",
+    "pillar": "life",
+    "country": "FR",
+    "indicator_code": "annual-working-hours-per-worker"
+  },
+  {
+    "date": "2026-09-24",
+    "pillar": "life",
+    "country": "PL",
+    "indicator_code": "annual-working-hours-per-worker"
+  },
+  {
+    "date": "2026-09-24",
+    "pillar": "money",
+    "country": "EG",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-09-24",
+    "pillar": "money",
+    "country": "US",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
   }
 ]
