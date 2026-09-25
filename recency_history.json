@@ -382,5 +382,11 @@
     "pillar": "money",
     "country": "US",
     "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-09-25",
+    "pillar": "life",
+    "country": "DE",
+    "indicator_code": "annual-working-hours-per-worker"
   }
 ]
