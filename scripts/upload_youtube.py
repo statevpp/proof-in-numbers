@@ -51,12 +51,19 @@ def already_uploaded_today():
     with open(UPLOAD_MARKER_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# Extra tags per content pillar (see 00_Project_Overview.md) — keeps each
-# video's metadata aligned with whichever of the two pillars it belongs to,
-# which helps YouTube surface it to the right audience.
+# Extra tags per content pillar (see 00_Project_Overview.md and
+# fetch_stat.py's module docstring for the 2026-09-27 ESTA.QUEST strategy
+# update — 4 distinct pillars now, was 2) — keeps each video's metadata
+# aligned with whichever pillar it belongs to, which helps YouTube surface
+# it to the right audience. Deliberately NO "estaquest"/brand tag anywhere
+# here — the strategy explicitly says not to make these look like ads; any
+# ESTA.QUEST mention lives only in generate_script.py's optional description
+# sentence for real_estate_sofia, never in tags.
 PILLAR_TAGS = {
-    "money": ["money", "personalfinance", "salary", "costofliving"],
-    "life": ["psychology", "lifehacks", "wellbeing", "happiness"],
+    "global_viral": ["money", "business", "economy", "surprisingfacts"],
+    "global_data_story": ["psychology", "lifehacks", "wellbeing", "happiness"],
+    "real_estate_global": ["realestate", "housingmarket", "property", "investing"],
+    "real_estate_sofia": ["sofia", "bulgaria", "realestate", "property"],
 }
 
 
@@ -92,7 +99,7 @@ def main():
     with open("data/today_stat.json", "r", encoding="utf-8") as f:
         stat = json.load(f)
 
-    pillar = stat.get("pillar", "money")
+    pillar = stat.get("pillar", "global_viral")
     tags = ["shorts", "proofinnumbers", "data", "facts"] + PILLAR_TAGS.get(pillar, [])
 
     youtube = get_authenticated_service()

@@ -4,45 +4,50 @@ fetch_stat.py — Pulls a handful of candidate stats for "Proof in Numbers" from
 free, unlimited public data sources, then asks Gemini to pick the single most
 "surprising" one for today's Short. Fully automatic, no human input required.
 
-The channel has exactly two content pillars (see 00_Project_Overview.md):
-- "money" -> "Money in Your Life"       (World Bank Open Data)
-- "life"  -> "Your Life by the Numbers" (World Bank + Our World in Data)
+STRATEGY UPDATE (2026-09-27) — ESTA.QUEST integration
+=======================================================
+The channel moved from a 2-pillar x 2-slot matrix (money/1, money/2, life/1,
+life/2 — 4 videos/day, but only 2 distinct content pillars) to FOUR distinct
+content pillars, one video each, per Pepi's "PROOF IN NUMBERS CONTENT
+STRATEGY — ESTA.QUEST INTEGRATION" directive:
 
-The channel publishes FOUR Shorts a day — two per pillar (see daily-short.yml,
-which runs this whole pipeline as a 4-way matrix: money/1, money/2, life/1,
-life/2). Two env vars, both optional, control that:
+- "global_viral"        -> "Global Viral"          (money, business, economy,
+  tech/science, surprising World Bank stats — was "money")
+- "global_data_story"   -> "Global Data Story"     (life expectancy,
+  happiness, work hours — was "life")
+- "real_estate_global"  -> "Real Estate Intelligence" (NEW — house-price
+  trends for a random country OTHER than Bulgaria, broad global appeal)
+- "real_estate_sofia"   -> "Sofia Property Intelligence" (NEW — Bulgaria's
+  official house-price index, framed for Sofia buyers/sellers; the ONLY
+  pillar where an ESTA.QUEST mention belongs, and only ever a brief,
+  natural, non-salesy one in the YouTube description — see
+  generate_script.py's REAL_ESTATE_SOFIA_EXTRA)
 
-- FORCE_PILLAR ("money" or "life") — restricts every candidate this run
-  considers to that one pillar, instead of picking randomly across both.
-- SLOT ("1" or "2") — splits COUNTRY_POOL into two disjoint halves (even vs
-  odd entries) so that the two same-pillar runs on the same day can never
-  land on the same country, even though each matrix job's random state is
-  otherwise completely independent of the other's. This is a cheap,
-  deterministic way to guarantee two visibly different videos per pillar per
-  day without any cross-job coordination (each matrix job is a separate,
-  isolated GitHub Actions runner with no shared state).
+Because each pillar now produces exactly ONE video/day (not two), the old
+SLOT env var (which split COUNTRY_POOL in half so two same-pillar jobs never
+picked the same country) is GONE — there is no longer a same-day collision
+to avoid. FORCE_PILLAR is now effectively required (daily-short.yml's matrix
+always sets it to one of the four pillar names above); leaving it unset
+still works for local testing (falls back to fully random legacy behaviour
+across all four pillars).
 
-Leaving both env vars unset reproduces the original single-video-per-day
-behaviour exactly (fully random pillar + full country pool) — kept for local
-testing / manual one-off runs.
+Real-estate data source: Eurostat's official House Price Index
+(prc_hpi_a, purchase=TOTAL, https://ec.europa.eu/eurostat/api/...) — a
+free, no-key, official-statistics API confirmed live 2026-09-27. This is
+REAL, VERIFIED, government-sourced data (2015=100 index + the annual rate
+of change), never a fabricated or estimated number — satisfies Pepi's
+"do not fabricate Bulgarian/Sofia real-estate statistics" rule by
+construction: nothing is ever invented, only official index values and
+their already-published rate of change are read straight from the API.
+Coverage is EU/EEA/UK/Turkey/Balkans (~31 countries, no aggregates) — this
+is a genuine scope limit of the only free, key-less, always-available
+official house-price API found; it does not reach the US/China/etc. Noted
+as a known limitation in project_8_storytelling_shorts.md, not hidden.
 
-Every candidate carries a "pillar" tag and a "framing_hint" string that tells
-generate_script.py how to translate the raw number into something a regular
-person feels in 3 seconds (money in their pocket, hours in their week, years
-of their life) instead of raw economics/statistics jargon. That translation
-rule is the single most important thing about this channel — see the
-"mass-appeal filter" section in 00_Project_Overview.md for why it exists.
-
-Free data sources used (all confirmed live and working, checked 2026-09-04):
-- World Bank Open Data API  (https://data.worldbank.org/ — no key needed)
-- Our World in Data (OWID) grapher CSV exports
-  (https://ourworldindata.org/grapher/<slug>.csv — no key needed)
-
-Output: writes data/today_stat.json with the chosen stat + the raw numbers,
-so downstream scripts (generate_script.py, render_chart.py, assemble_video.sh,
-upload_youtube.py) don't need to re-fetch anything, and can all read the
-"pillar" field to stay consistent about which of the two pillars this video
-belongs to.
+The two original pillars ("money" / "life") keep their original World Bank
++ OWID indicator pools untouched, just renamed and (for global_viral) two
+new World Bank indicators added for a bit more "science/tech" variety in
+line with the strategy brief's broader Video-1 topic list.
 """
 import csv
 import io
@@ -55,9 +60,10 @@ import urllib.request
 import google_genai_helper as gh
 
 # ---------------------------------------------------------------------------
-# Pillar "money" — "Money in Your Life": salaries, prices, taxes, healthcare
-# costs. Always translated by generate_script.py into personal money terms
-# (never raw econ jargon like "GDP" or "% of GDP" spoken out loud).
+# Pillar "global_viral" (was "money") — "Global Viral": money, business,
+# economics, tech/science, surprising World Bank stats. Always translated by
+# generate_script.py into personal, concrete terms (never raw econ jargon
+# like "GDP" or "% of GDP" spoken out loud).
 # ---------------------------------------------------------------------------
 MONEY_INDICATORS = [
     {
@@ -99,12 +105,28 @@ MONEY_INDICATORS = [
         "framing_hint": "Translate as roughly how much debt is sitting "
                          "behind every dollar the country earns in a year.",
     },
+    {
+        "code": "IT.NET.USER.ZS",
+        "label": "Individuals using the Internet (% of population)",
+        "framing_hint": "Translate as: out of every 100 people here, how "
+                         "many are online — good for a 'you'd assume "
+                         "everyone is online by now, but...' surprise angle.",
+    },
+    {
+        "code": "GB.XPD.RSDV.GD.ZS",
+        "label": "Research and development expenditure (% of GDP)",
+        "framing_hint": "Translate as roughly how many cents out of every "
+                         "$100 the whole country earns gets spent inventing "
+                         "new technology and science — never say 'R&D "
+                         "expenditure as a percent of GDP' out loud.",
+    },
 ]
 
 # ---------------------------------------------------------------------------
-# Pillar "life" — "Your Life by the Numbers": sleep, happiness, work hours,
-# life expectancy. Always translated into years / hours-per-week / a feeling
-# on a 0-10 scale a viewer can picture, never a bare index number.
+# Pillar "global_data_story" (was "life") — "Global Data Story": sleep,
+# happiness, work hours, life expectancy. Always translated into years /
+# hours-per-week / a feeling on a 0-10 scale a viewer can picture, never a
+# bare index number.
 # ---------------------------------------------------------------------------
 LIFE_INDICATORS_WB = [
     {
@@ -136,14 +158,76 @@ LIFE_INDICATORS_OWID = [
     },
 ]
 
-# A rotating pool of countries so the channel doesn't repeat the same one.
-# Maps World Bank's ISO2 code to OWID's ISO3 code for the same country.
+# A rotating pool of countries so global_viral / global_data_story don't
+# repeat the same one. Maps World Bank's ISO2 code to OWID's ISO3 code for
+# the same country.
 COUNTRY_POOL = {
     "BG": "BGR", "US": "USA", "DE": "DEU", "JP": "JPN", "CN": "CHN",
     "IN": "IND", "BR": "BRA", "NG": "NGA", "FR": "FRA", "GB": "GBR",
     "KR": "KOR", "ZA": "ZAF", "MX": "MEX", "SA": "SAU", "AU": "AUS",
     "CA": "CAN", "TR": "TUR", "PL": "POL", "EG": "EGY", "VN": "VNM",
 }
+
+# ---------------------------------------------------------------------------
+# Pillar "real_estate_global" / "real_estate_sofia" (NEW, 2026-09-27) —
+# Eurostat's official House Price Index (prc_hpi_a), unit=I15_A_AVG
+# (2015=100) throughout. All three "purchase" variants below are on that
+# SAME 2015=100 basis, so the generic pct_change math in _finish_candidate()
+# (first_value -> last_value) stays a mathematically honest "homes here
+# cost X% more/less now than in <first_year>" for every one of them — never
+# a percent-change-of-a-percent. (An earlier draft also tried Eurostat's
+# RCH_A_AVG "already a % rate of change" unit for variety; dropped because
+# running it through the same pct_change formula would silently compute a
+# percent-change-of-a-percentage — e.g. a rate moving from 7% to 14.6% is
+# NOT "108% more expensive homes" — a real accuracy risk this channel's
+# whole premise exists to avoid. TOTAL/DW_NEW/DW_EXST have no such trap:
+# they're all directly comparable index levels.) Confirmed live via direct
+# API calls, 2026-09-27 (TOTAL, DW_NEW and DW_EXST all have solid coverage
+# across the country pool below).
+# ---------------------------------------------------------------------------
+REAL_ESTATE_UNITS = [
+    {
+        "purchase": "TOTAL",
+        "label": "House Price Index — all dwellings (2015 = 100)",
+        "framing_hint": "Translate the index level into 'homes here now "
+                         "cost roughly X% more (or less) than they did in "
+                         "<first_year>' — subtract 100 from the LATEST "
+                         "index value only if first_year is 2015; "
+                         "otherwise just use the first_value->last_value "
+                         "percent change already given. Never say 'index, "
+                         "2015=100' out loud.",
+    },
+    {
+        "purchase": "DW_NEW",
+        "label": "House Price Index — newly built dwellings (2015 = 100)",
+        "framing_hint": "Translate as how much more (or less) it costs to "
+                         "buy a brand-NEW home here now vs <first_year> — "
+                         "say 'newly built homes', never 'index, 2015=100'.",
+    },
+    {
+        "purchase": "DW_EXST",
+        "label": "House Price Index — existing (resale) dwellings (2015 = 100)",
+        "framing_hint": "Translate as how much more (or less) it costs to "
+                         "buy an already-existing, resale home here now vs "
+                         "<first_year> — say 'resale homes', never 'index, "
+                         "2015=100'.",
+    },
+]
+
+# Eurostat's real, ISO-alpha-2-ish geo codes for the House Price Index
+# dataset (confirmed live 2026-09-27) — EU + EEA + UK + Türkiye, i.e. every
+# country Eurostat actually publishes this series for. Aggregates (EU, EA,
+# EU27_2020, etc.) are deliberately excluded — only real countries. NOTE:
+# Eurostat uses "UK" and "EL" (not ISO's "GB"/"GR") — kept as Eurostat spells
+# them since that's what the API call and this pillar's own country_iso2
+# field need to round-trip correctly.
+REAL_ESTATE_COUNTRY_POOL = [
+    "BE", "BG", "CZ", "DK", "DE", "EE", "IE", "ES", "FR", "HR", "IT", "CY",
+    "LV", "LT", "LU", "HU", "MT", "NL", "AT", "PL", "PT", "RO", "SI", "SK",
+    "FI", "SE", "IS", "NO", "CH", "UK", "TR",
+]
+
+EUROSTAT_BASE = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data"
 
 # ---------------------------------------------------------------------------
 # Recency exclusion — avoids picking the same country for the same pillar on
@@ -157,8 +241,13 @@ COUNTRY_POOL = {
 #
 # This file lives at the repo root, NOT inside data/, so it is never touched
 # by the actions/cache step (which only restores data/, audio/, assets/,
-# keyed by date+pillar+slot) — it is purely git-tracked history, unrelated
-# to a single day's ephemeral cache.
+# keyed by date+pillar), so it is purely git-tracked history, unrelated to a
+# single day's ephemeral cache.
+#
+# EXCEPTION: "real_estate_sofia" always uses country "BG" by design (see
+# module docstring) — there is no country to diversify for that pillar, so
+# recency exclusion is skipped for it entirely (see build_candidates()).
+# Variety for that pillar instead comes from REAL_ESTATE_UNITS.
 # ---------------------------------------------------------------------------
 RECENCY_FILE = "recency_history.json"
 RECENCY_WINDOW_DAYS = 7
@@ -246,6 +335,52 @@ def fetch_owid_series(iso3_code: str, slug: str, years: int = 12):
     return points[-years:] if len(points) > years else points
 
 
+_EUROSTAT_CACHE: dict[str, dict] = {}
+
+
+def fetch_eurostat_hpi_series(geo_code: str, purchase: str, years: int = 10):
+    """Eurostat's official House Price Index (prc_hpi_a, unit=I15_A_AVG,
+    i.e. 2015=100). No API key, free, official government/EU statistics —
+    confirmed live 2026-09-27. Returns [(year_str, value_float), ...] sorted
+    ascending, or None if this geo/purchase combination has no published
+    data (some smaller countries have gaps for some years/purchase types —
+    treated as a normal skip, same as a World Bank/OWID miss)."""
+    cache_key = f"{geo_code}:{purchase}"
+    if cache_key not in _EUROSTAT_CACHE:
+        url = (
+            f"{EUROSTAT_BASE}/prc_hpi_a?format=JSON&geo={geo_code}"
+            f"&purchase={purchase}&unit=I15_A_AVG&lang=EN"
+        )
+        with urllib.request.urlopen(url, timeout=25) as resp:
+            _EUROSTAT_CACHE[cache_key] = json.load(resp)
+
+    payload = _EUROSTAT_CACHE[cache_key]
+    time_dim = payload.get("dimension", {}).get("time", {}).get("category", {})
+    index_by_time = time_dim.get("index", {})
+    values = payload.get("value", {})
+    if not index_by_time or not values:
+        return None
+
+    # JSON-stat: value is a sparse dict keyed by the FLAT integer position
+    # (as a string) across all dimensions. Since this call fixes every other
+    # dimension (freq=A implicit, purchase=TOTAL, unit=<one>, geo=<one>) to a
+    # single category each, the "time" dimension's own index IS the flat
+    # position directly (size = [1,1,1,1,N_years]) — confirmed against a
+    # live BG response on 2026-09-27 (21 time points -> 21 values, positions
+    # 0..20 matching the time labels in order).
+    points = []
+    for year_label, pos in index_by_time.items():
+        raw_val = values.get(str(pos))
+        if raw_val is None:
+            continue
+        try:
+            points.append((year_label, float(raw_val)))
+        except (TypeError, ValueError):
+            continue
+    points.sort(key=lambda p: p[0])
+    return points[-years:] if len(points) > years else points
+
+
 def _finish_candidate(country_iso2: str, spec: dict, series, pillar: str, source: str):
     first_year, first_val = series[0]
     last_year, last_val = series[-1]
@@ -254,7 +389,7 @@ def _finish_candidate(country_iso2: str, spec: dict, series, pillar: str, source
         pct_change = round((last_val - first_val) / first_val * 100, 1)
     return {
         "country": country_iso2,
-        "indicator_code": spec.get("code") or spec.get("slug"),
+        "indicator_code": spec.get("code") or spec.get("slug") or spec.get("purchase"),
         "indicator_label": spec["label"],
         "framing_hint": spec["framing_hint"],
         "pillar": pillar,
@@ -268,64 +403,96 @@ def _finish_candidate(country_iso2: str, spec: dict, series, pillar: str, source
     }
 
 
+def _build_real_estate_candidates(n: int, pillar: str, exclude: set) -> list:
+    """real_estate_global draws a random country (any Eurostat HPI country
+    EXCEPT Bulgaria, which is reserved for real_estate_sofia) each day.
+    real_estate_sofia always uses Bulgaria — see module docstring for why
+    recency exclusion is skipped for it (there is no country to rotate)."""
+    candidates = []
+    attempts = 0
+
+    if pillar == "real_estate_sofia":
+        country_choices = ["BG"]
+    else:
+        country_choices = [c for c in REAL_ESTATE_COUNTRY_POOL if c != "BG"]
+
+    while len(candidates) < n and attempts < n * 6:
+        attempts += 1
+        country = random.choice(country_choices)
+
+        if pillar != "real_estate_sofia" and (pillar, country) in exclude:
+            continue
+
+        unit_spec = random.choice(REAL_ESTATE_UNITS)
+        try:
+            series = fetch_eurostat_hpi_series(country, unit_spec["purchase"])
+        except Exception as exc:  # noqa: BLE001 - one bad fetch must never kill the run
+            print(f"[fetch_stat] Eurostat fetch failed for {country}/{unit_spec['purchase']}: {exc}",
+                  file=sys.stderr)
+            continue
+
+        if not series or len(series) < 3:
+            continue
+        candidates.append(_finish_candidate(country, unit_spec, series, pillar,
+                                             "Eurostat (official House Price Index)"))
+
+    return candidates
+
+
 def build_candidates(n: int = 8, exclude: set | None = None):
     """Pull n random candidates that actually have data.
 
-    FORCE_PILLAR ("money"/"life") restricts which pillar's pools are drawn
-    from — used by the 4-videos-a-day matrix in daily-short.yml so each
-    matrix job produces a video for its assigned pillar instead of a random
-    one. SLOT ("1"/"2") splits COUNTRY_POOL into two disjoint halves (even
-    vs odd dict entries) so the two same-pillar matrix jobs running the same
-    day can never both land on the same country — a cheap way to guarantee
-    two visibly different videos per pillar per day without any
-    coordination between the (fully independent) matrix job runners.
+    FORCE_PILLAR (one of "global_viral", "global_data_story",
+    "real_estate_global", "real_estate_sofia") restricts which pool this
+    run draws from — daily-short.yml's matrix always sets it, one job per
+    pillar, so each of today's 4 videos belongs to a different pillar. Left
+    unset, this reproduces the original single-video-per-day fully-random
+    behaviour across ALL four pillars (kept for local testing only).
 
     `exclude` is an optional set of (pillar, country_iso2) pairs to steer
     away from (see recently_used_countries()) — a candidate landing on one
     of these is simply skipped and another attempt made, so it only ever
-    narrows the choice, never fails the run.
-
-    Both env vars are optional; leaving them unset reproduces the original
-    fully-random, full-country-pool behaviour (one video/day, either
-    pillar) — kept for local testing and manual one-off runs.
+    narrows the choice, never fails the run. Not applied to
+    "real_estate_sofia" (see module docstring — that pillar has no country
+    to rotate).
     """
     exclude = exclude or set()
+    force_pillar = os.environ.get("FORCE_PILLAR", "").strip().lower() or None
+
+    if force_pillar:
+        print(f"[fetch_stat] FORCE_PILLAR={force_pillar!r}")
+
+    if force_pillar in ("real_estate_global", "real_estate_sofia"):
+        return _build_real_estate_candidates(n, force_pillar, exclude)
+
+    if force_pillar is None:
+        # Legacy/local-testing path: fully random across every pillar.
+        real_estate_pillar = random.choice(["real_estate_global", "real_estate_sofia"])
+        pool = (["global_viral"] * 2 + ["global_data_story"] * 2
+                + [real_estate_pillar])
+        force_pillar = random.choice(pool)
+        if force_pillar in ("real_estate_global", "real_estate_sofia"):
+            return _build_real_estate_candidates(n, force_pillar, exclude)
+
     candidates = []
     attempts = 0
 
-    force_pillar = os.environ.get("FORCE_PILLAR", "").strip().lower() or None
-    slot = os.environ.get("SLOT", "").strip()
-
-    country_items = list(COUNTRY_POOL.items())
-    if slot == "1":
-        country_items = country_items[0::2]
-    elif slot == "2":
-        country_items = country_items[1::2]
-
-    if force_pillar or slot:
-        print(f"[fetch_stat] FORCE_PILLAR={force_pillar!r} SLOT={slot!r} "
-              f"-> country pool size {len(country_items)}")
-
     while len(candidates) < n and attempts < n * 5:
         attempts += 1
-        country_iso2, country_iso3 = random.choice(country_items)
+        country_iso2, country_iso3 = random.choice(list(COUNTRY_POOL.items()))
 
-        # Figure out which pillar this attempt would land on BEFORE doing
-        # any network fetch, so a recently-used (pillar, country) pair can
-        # be skipped cheaply instead of wasting a real API call on data
-        # we're going to throw away anyway.
-        if force_pillar == "money":
-            likely_pillar = "money"
-        elif force_pillar == "life":
-            likely_pillar = "life"
+        if force_pillar == "global_viral":
+            likely_pillar = "global_viral"
+        elif force_pillar == "global_data_story":
+            likely_pillar = "global_data_story"
         else:
-            likely_pillar = None  # unknown until pool_choice below
+            likely_pillar = None
         if likely_pillar and (likely_pillar, country_iso2) in exclude:
             continue
 
-        if force_pillar == "money":
+        if force_pillar == "global_viral":
             pool_choice = "money"
-        elif force_pillar == "life":
+        elif force_pillar == "global_data_story":
             pool_choice = random.choice(["life_wb", "life_owid"])
         else:
             pool_choice = random.choice(["money", "life_wb", "life_owid"])
@@ -334,15 +501,15 @@ def build_candidates(n: int = 8, exclude: set | None = None):
             if pool_choice == "money":
                 spec = random.choice(MONEY_INDICATORS)
                 series = fetch_worldbank_series(country_iso2, spec["code"])
-                source, pillar = "World Bank Open Data", "money"
+                source, pillar = "World Bank Open Data", "global_viral"
             elif pool_choice == "life_wb":
                 spec = random.choice(LIFE_INDICATORS_WB)
                 series = fetch_worldbank_series(country_iso2, spec["code"])
-                source, pillar = "World Bank Open Data", "life"
+                source, pillar = "World Bank Open Data", "global_data_story"
             else:
                 spec = random.choice(LIFE_INDICATORS_OWID)
                 series = fetch_owid_series(country_iso3, spec["slug"])
-                source, pillar = spec.get("source", "Our World in Data"), "life"
+                source, pillar = spec.get("source", "Our World in Data"), "global_data_story"
         except Exception as exc:  # noqa: BLE001 - one bad fetch must never kill the run
             print(f"[fetch_stat] Fetch failed for {country_iso2}/{pool_choice}: {exc}", file=sys.stderr)
             continue
@@ -350,8 +517,6 @@ def build_candidates(n: int = 8, exclude: set | None = None):
         if not series or len(series) < 3:
             continue
         if (pillar, country_iso2) in exclude:
-            # Only reachable when force_pillar was unset (the likely_pillar
-            # check above already caught the forced-pillar case pre-fetch).
             continue
         candidates.append(_finish_candidate(country_iso2, spec, series, pillar, source))
 
@@ -395,10 +560,10 @@ def main():
     # brand-new machine, so without this check a failed later step (e.g.
     # assemble_video.sh) would cause a retry to re-roll a DIFFERENT random
     # stat here, making the video inconsistent across debugging attempts.
-    # daily-short.yml caches this "data" dir keyed by date + pillar + slot
-    # (no restore-keys fallback — this repo's paths are NOT date-namespaced
-    # like the sibling Lumaris pipeline's are, so a stale prior day's — or
-    # prior slot's — cache must never be allowed to satisfy this check).
+    # daily-short.yml caches this "data" dir keyed by date + pillar (no
+    # restore-keys fallback — this repo's paths are NOT date-namespaced like
+    # the sibling Lumaris pipeline's are, so a stale prior day's — or prior
+    # pillar's — cache must never be allowed to satisfy this check).
     if os.path.exists("data/today_stat.json"):
         print("[fetch_stat] data/today_stat.json already exists for today "
               "(restored from cache) — skipping re-fetch.")
@@ -411,9 +576,9 @@ def main():
 
     candidates = build_candidates(n=8, exclude=exclude)
     if not candidates and exclude:
-        # Extremely unlikely with 20 countries x up to 9 indicators, but a
-        # video going out with a repeated country is always better than no
-        # video at all — never let the diversity feature block the pipeline.
+        # Extremely unlikely with these pool sizes, but a video going out
+        # with a repeated country is always better than no video at all —
+        # never let the diversity feature block the pipeline.
         print("[fetch_stat] No candidates left after recency exclusion — "
               "retrying without it rather than failing the run.", file=sys.stderr)
         candidates = build_candidates(n=8)

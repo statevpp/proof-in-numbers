@@ -4,10 +4,12 @@
 # thumbnail. Adapted from the proven Lumaris assemble-youtube-video.sh
 # pattern (same repo family, same known ffmpeg gotchas — see notes below).
 #
-# Also burns in a small pillar badge ("MONEY IN YOUR LIFE" / "YOUR LIFE BY
-# THE NUMBERS") above the hook, read from data/today_stat.json's "pillar"
-# field — this is what makes the channel's two content pillars visually
-# recognizable as a consistent series, not two unrelated video styles.
+# Also burns in a small pillar badge ("GLOBAL VIRAL" / "GLOBAL DATA STORY" /
+# "REAL ESTATE INTEL" / "SOFIA PROPERTY INTEL") above the hook, read from
+# data/today_stat.json's "pillar" field — this is what makes the channel's
+# four content pillars (2026-09-27 ESTA.QUEST strategy update — see
+# fetch_stat.py's module docstring) visually recognizable as a consistent
+# series, not four unrelated video styles.
 #
 # Usage: ./assemble_video.sh <workdir>
 # Expects inside <workdir>: audio/voice.wav, assets/chart.png,
@@ -61,14 +63,20 @@ print(text)
 PY
 )
 
-# Pillar badge text — derived from a fixed 2-item map (never external/free
+# Pillar badge text — derived from a fixed 4-item map (never external/free
 # text), so it needs no sanitization the way HOOK/THUMB_TEXT do.
 PILLAR_LABEL=$(python3 - "$STAT_JSON" <<'PY'
 import json, sys
 with open(sys.argv[1], encoding="utf-8") as f:
     d = json.load(f)
-pillar = d.get("pillar", "money")
-print("YOUR LIFE BY THE NUMBERS" if pillar == "life" else "MONEY IN YOUR LIFE")
+pillar = d.get("pillar", "global_viral")
+labels = {
+    "global_viral": "GLOBAL VIRAL",
+    "global_data_story": "GLOBAL DATA STORY",
+    "real_estate_global": "REAL ESTATE INTEL",
+    "real_estate_sofia": "SOFIA PROPERTY INTEL",
+}
+print(labels.get(pillar, "GLOBAL VIRAL"))
 PY
 )
 

@@ -11,22 +11,23 @@ that make numbers up: every "Proof in Numbers" video shows exactly where its
 number came from. Every template below keeps that caption, plus a country +
 indicator title, no matter which visual style is chosen.
 
-VISUAL VARIETY (added 2026-09-04, after the channel moved to 4 videos/day):
-publishing 4 videos a day with the exact same chart style made the channel
-feel repetitive fast. Two independent things now vary between videos:
+VISUAL VARIETY (added 2026-09-04, after the channel moved to 4 videos/day;
+reworked 2026-09-27 when the channel moved from 2 pillars x 2 slots to 4
+distinct pillars, one video each — see fetch_stat.py's module docstring for
+the full ESTA.QUEST strategy context). Two independent things vary between
+videos:
 
-1. Accent color by pillar — MONEY_ACCENT (warm gold) for "Money in Your
-   Life", LIFE_ACCENT (teal) for "Your Life by the Numbers" — so the two
-   pillars are visually distinguishable at a glance, not just by title text.
-2. Chart template by (pillar, slot) — daily-short.yml's 4-way matrix means
-   there are exactly 4 (pillar, slot) combinations a day; TEMPLATE_BY_SLOT
-   below maps each one to a DIFFERENT layout (line trend / hero number /
-   before-vs-after bars / proportion grid), so all four of today's videos
-   look different from each other, and the same slot uses a different
-   template than its sibling slot in the other pillar. SLOT is read from an
-   env var (see daily-short.yml's "Render chart" step) — if it's unset
-   (e.g. a local manual run), this falls back to the original single-line-
-   chart template, so old single-video-per-day usage still works unchanged.
+1. Accent color by pillar — ACCENT_BY_PILLAR maps each of the 4 pillars
+   (global_viral, global_data_story, real_estate_global, real_estate_sofia)
+   to its own color, so all four are visually distinguishable at a glance,
+   not just by title text.
+2. Chart template by pillar — TEMPLATE_BY_PILLAR below maps each of the 4
+   pillars to a DIFFERENT layout (line trend / hero number / before-vs-after
+   bars / proportion grid), so all four of today's videos look different
+   from each other. Since each pillar now produces exactly one video/day
+   (no more same-day sibling to distinguish via a SLOT env var — that
+   mechanism is gone entirely), a straight pillar->template map is all that's
+   needed.
 
 All four templates are pure matplotlib (no AI image calls), so this stays
 free and numerically exact regardless of which one gets picked.
@@ -50,15 +51,37 @@ import matplotlib.pyplot as plt
 BRAND_BG = "#0b0e14"
 BRAND_TEXT = "#eef0f2"
 DIM_SHADE = "#3a4250"      # "before" bar / unfilled grid cells — muted, not accent
-MONEY_ACCENT = "#e0b04a"   # warm gold — "Money in Your Life"
-LIFE_ACCENT = "#4fd1c5"    # teal — "Your Life by the Numbers"
+
+# Accent color per pillar (2026-09-27 strategy update: 4 distinct pillars,
+# one video each, replacing the old 2-pillar/2-slot matrix) — so all four of
+# today's videos are visually distinguishable at a glance, not just by title
+# text. First two colors are the original "money"/"life" accents, kept
+# unchanged so old-style local runs still look the same; the two real-estate
+# pillars get their own new accents.
+GLOBAL_VIRAL_ACCENT = "#e0b04a"        # warm gold (was MONEY_ACCENT)
+GLOBAL_DATA_STORY_ACCENT = "#4fd1c5"   # teal (was LIFE_ACCENT)
+REAL_ESTATE_GLOBAL_ACCENT = "#8f7fe0"  # violet
+REAL_ESTATE_SOFIA_ACCENT = "#e07a5f"   # terracotta — distinct from the
+                                       # global real-estate violet so the two
+                                       # real-estate videos don't look alike
+ACCENT_BY_PILLAR = {
+    "global_viral": GLOBAL_VIRAL_ACCENT,
+    "global_data_story": GLOBAL_DATA_STORY_ACCENT,
+    "real_estate_global": REAL_ESTATE_GLOBAL_ACCENT,
+    "real_estate_sofia": REAL_ESTATE_SOFIA_ACCENT,
+}
 FIG_W_PX, FIG_H_PX = 1080, 1920
 DPI = 150
 
-# Full country names for the channel's rotating pool (see fetch_stat.py's
-# COUNTRY_POOL) — purely a display nicety so chart titles read "POLAND"
-# instead of the raw "PL" ISO2 code used internally. Falls back to the raw
-# code for anything not in this list (defensive, should never trigger).
+# Full country names for the channel's rotating pools — purely a display
+# nicety so chart titles read "POLAND" instead of the raw ISO2/Eurostat code
+# used internally. Falls back to the raw code for anything not in this list
+# (defensive, should never trigger). Covers both fetch_stat.py's original
+# World Bank COUNTRY_POOL (global_viral / global_data_story) and the newer
+# Eurostat REAL_ESTATE_COUNTRY_POOL (real_estate_global / real_estate_sofia,
+# added 2026-09-27) — a few codes differ between the two APIs for the same
+# country (Eurostat spells the UK "UK", not ISO's "GB"; Greece "EL", not
+# "GR") so both spellings are listed where they'd otherwise collide.
 COUNTRY_NAMES = {
     "BG": "Bulgaria", "US": "United States", "DE": "Germany", "JP": "Japan",
     "CN": "China", "IN": "India", "BR": "Brazil", "NG": "Nigeria",
@@ -66,6 +89,14 @@ COUNTRY_NAMES = {
     "ZA": "South Africa", "MX": "Mexico", "SA": "Saudi Arabia",
     "AU": "Australia", "CA": "Canada", "TR": "Turkey", "PL": "Poland",
     "EG": "Egypt", "VN": "Vietnam",
+    # Eurostat House Price Index country pool additions:
+    "BE": "Belgium", "CZ": "Czechia", "DK": "Denmark", "EE": "Estonia",
+    "IE": "Ireland", "ES": "Spain", "HR": "Croatia", "IT": "Italy",
+    "CY": "Cyprus", "LV": "Latvia", "LT": "Lithuania", "LU": "Luxembourg",
+    "HU": "Hungary", "MT": "Malta", "NL": "Netherlands", "AT": "Austria",
+    "PT": "Portugal", "RO": "Romania", "SI": "Slovenia", "SK": "Slovakia",
+    "FI": "Finland", "SE": "Sweden", "IS": "Iceland", "NO": "Norway",
+    "CH": "Switzerland", "UK": "United Kingdom", "EL": "Greece",
 }
 
 
@@ -232,15 +263,17 @@ TEMPLATES = {
     "pictogram": draw_pictogram_template,
 }
 
-# Exactly one template per (pillar, slot) combination in the 4-way daily
-# matrix — see daily-short.yml — so all four of today's videos look
-# different from each other. Unset/unrecognized SLOT (e.g. a local manual
-# run with no matrix) falls back to "line", the channel's original look.
-TEMPLATE_BY_SLOT = {
-    ("money", "1"): "line",
-    ("money", "2"): "bars",
-    ("life", "1"): "hero",
-    ("life", "2"): "pictogram",
+# Exactly one template per PILLAR (2026-09-27: each of the 4 pillars now
+# produces exactly one video/day, so the old (pillar, slot) pairing that
+# picked among 4 combinations from 2 pillars x 2 slots is gone — a straight
+# pillar->template map does the same "all four of today's videos look
+# different" job with no SLOT env var needed at all). Unrecognized/legacy
+# pillar values fall back to "line", the channel's original look.
+TEMPLATE_BY_PILLAR = {
+    "global_viral": "line",
+    "global_data_story": "hero",
+    "real_estate_global": "bars",
+    "real_estate_sofia": "pictogram",
 }
 
 
@@ -248,11 +281,9 @@ def main():
     with open("data/today_stat.json", "r", encoding="utf-8") as f:
         stat = json.load(f)
 
-    pillar = stat.get("pillar", "money")
-    accent = MONEY_ACCENT if pillar == "money" else LIFE_ACCENT
-
-    slot = os.environ.get("SLOT", "").strip()
-    template_name = TEMPLATE_BY_SLOT.get((pillar, slot), "line")
+    pillar = stat.get("pillar", "global_viral")
+    accent = ACCENT_BY_PILLAR.get(pillar, GLOBAL_VIRAL_ACCENT)
+    template_name = TEMPLATE_BY_PILLAR.get(pillar, "line")
 
     fig = plt.figure(figsize=(FIG_W_PX / DPI, FIG_H_PX / DPI), dpi=DPI)
     fig.patch.set_facecolor(BRAND_BG)
@@ -274,7 +305,7 @@ def main():
     out_path = "assets/chart.png"
     fig.savefig(out_path, facecolor=BRAND_BG)
     plt.close(fig)
-    print(f"[render_chart] Saved {out_path} (pillar={pillar}, slot={slot!r}, "
+    print(f"[render_chart] Saved {out_path} (pillar={pillar}, "
           f"template={template_name})")
 
 

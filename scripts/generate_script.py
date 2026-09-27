@@ -26,9 +26,53 @@ import sys
 import google_genai_helper as gh
 
 PILLAR_NAMES = {
-    "money": "Money in Your Life",
-    "life": "Your Life by the Numbers",
+    "global_viral": "Global Viral",
+    "global_data_story": "Global Data Story",
+    "real_estate_global": "Real Estate Intelligence",
+    "real_estate_sofia": "Sofia Property Intelligence",
 }
+
+# One extra sentence appended to the WRITER_PROMPT only for the two real
+# estate pillars (added 2026-09-27, ESTA.QUEST integration strategy) — the
+# channel's core rule (never economic jargon, always a personal comparison)
+# still applies in full; this only tells Gemini the SUBJECT is housing, not
+# generic money/life.
+REAL_ESTATE_EXTRA = """
+This video is about HOUSING / REAL ESTATE prices specifically (not generic
+personal finance). Frame the hook and narration around what it costs to buy
+a home — never use the words "index" or "2015=100" out loud; always convert
+to a plain "homes here cost roughly X% more than they used to" or "buying a
+home here got X% more expensive" sentence, using the percent-change number
+already given in the raw stat.
+"""
+
+# Appended ONLY for pillar "real_estate_sofia" — the ONE pillar where a
+# brief, natural ESTA.QUEST mention belongs (2026-09-27 strategy: "ESTA.QUEST
+# should NOT be inserted as an artificial advertisement into every video...
+# may be mentioned briefly or used as a subtle CTA, but never at the expense
+# of the video's entertainment/information value"). Deliberately placed in
+# the "description" field only, NEVER in the hook/narration/title — so the
+# spoken video itself stays 100% pure entertainment/information and the
+# mention only shows up as one soft, optional line in the YouTube
+# description below the video, exactly like a footnote/credit, not an ad
+# read. Gemini is told this is OPTIONAL so a day where it doesn't fit
+# naturally can just skip it rather than forcing something salesy.
+REAL_ESTATE_SOFIA_EXTRA = """
+This is Bulgaria's official nationwide house-price data — mention in the
+narration that Sofia (the capital) drives a large share of this national
+market, but do NOT claim this number IS a Sofia-only figure (it isn't —
+be honest that it's the national index).
+
+For the "description" field ONLY (never in hook/title/narration): after
+the required 2-3 sentences crediting the data source, you MAY optionally
+add ONE short, natural, non-salesy sentence mentioning that ESTA.QUEST
+(a Sofia property resource) can help viewers interested in the Sofia
+market explore current listings or values — but ONLY if it reads as a
+genuinely helpful footnote, never as an ad. If it would feel forced or
+salesy for this specific stat, skip it entirely and just write the normal
+2-3 sentence description. Never mention ESTA.QUEST anywhere except
+optionally in this one description sentence.
+"""
 
 # Raw academic/technical terms that must NEVER survive into what the viewer
 # hears or reads — if the raw stat is phrased this way, the writer prompt
@@ -37,6 +81,10 @@ PILLAR_NAMES = {
 BANNED_JARGON = [
     "gdp", "per capita", "gini", "% of gdp", "consumer price index", "cpi",
     "oecd", "basis points", "percentile", "quartile",
+    # Added 2026-09-27 for the real-estate pillars — Eurostat's House Price
+    # Index is a "2015=100" index, and the writer prompt requires it always
+    # be translated into a plain percent-more/less-expensive sentence.
+    "2015=100", "house price index", "hpi",
 ]
 
 WRITER_PROMPT = """You are the scriptwriter for "Proof in Numbers", a faceless,
@@ -44,11 +92,14 @@ English-language data-storytelling YouTube Shorts / TikTok / Reels channel
 for a GLOBAL, GENERAL audience — regular people scrolling their phone, NOT
 economists or data nerds.
 
-The channel has exactly two content pillars:
-- "Money in Your Life": salaries, prices, rent, taxes, retirement, healthcare
-- "Your Life by the Numbers": sleep, happiness, work hours, life expectancy
+The channel publishes 4 videos/day across four content pillars:
+- "Global Viral": money, business, economy, tech/science — surprising stats
+- "Global Data Story": sleep, happiness, work hours, life expectancy
+- "Real Estate Intelligence": housing prices anywhere in the world
+- "Sofia Property Intelligence": Bulgaria's housing market, for Sofia buyers/sellers
 
 This stat belongs to the "{pillar_name}" pillar.
+{pillar_extra}
 
 THE MOST IMPORTANT RULE (mass-appeal filter): every sentence must pass this
 test — "would someone with zero interest in economics or statistics
@@ -123,8 +174,8 @@ def main():
     with open("data/today_stat.json", "r", encoding="utf-8") as f:
         stat = json.load(f)
 
-    pillar = stat.get("pillar", "money")
-    pillar_name = PILLAR_NAMES.get(pillar, PILLAR_NAMES["money"])
+    pillar = stat.get("pillar", "global_viral")
+    pillar_name = PILLAR_NAMES.get(pillar, PILLAR_NAMES["global_viral"])
     framing_hint = stat.get(
         "framing_hint",
         "Translate this into a concrete, personal comparison — money in "
@@ -132,9 +183,16 @@ def main():
     )
     stat_json = json.dumps(stat, ensure_ascii=False, default=str)
 
+    pillar_extra = ""
+    if pillar == "real_estate_global":
+        pillar_extra = REAL_ESTATE_EXTRA
+    elif pillar == "real_estate_sofia":
+        pillar_extra = REAL_ESTATE_EXTRA + REAL_ESTATE_SOFIA_EXTRA
+
     def write(extra_instruction: str = ""):
         prompt = WRITER_PROMPT.format(
-            pillar_name=pillar_name, framing_hint=framing_hint, stat_json=stat_json
+            pillar_name=pillar_name, pillar_extra=pillar_extra,
+            framing_hint=framing_hint, stat_json=stat_json,
         )
         if extra_instruction:
             prompt += "\n\nIMPORTANT: " + extra_instruction
