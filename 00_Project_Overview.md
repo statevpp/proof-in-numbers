@@ -68,3 +68,26 @@ YouTube Shorts / TikTok Creator Fund рекламен приход + евент�
 - Проверка на целия код за грешки (fetch_stat.py, generate_script.py, render_chart.py, generate_voice.py, assemble_video.sh, upload_youtube.py) преди първо реално пускане.
 - Създаване на GitHub repo и качване на кода (виж SETUP.md за еднократните стъпки: Gemini API ключ, YouTube OAuth, audit заявка).
 - Първи тестов run през GitHub Actions ("Run workflow") и преглед на резултата, преди да се остави да тръгне по автоматичния дневен график.
+
+## ✅ 2026-09-27 — ESTA.QUEST integration: 4 отделни content pillars (замества 2×2 матрицата)
+
+Пепи зададе нова content стратегия: каналът остава глобален viral Shorts канал (views + growth като приоритет №1), но от 4-те дневни видеа, 2 постепенно изграждат авторитет в real estate/data пространството, водещо трафик към бъдещия ESTA.QUEST продукт — БЕЗ да превръща канала в real-estate канал и БЕЗ явна реклама във видеата.
+
+**Технически резултат** (implemented, локално тествано с реални live API извиквания, чака push потвърждение — виж "Отворени въпроси" по-долу):
+
+Старата 2-pillar × 2-slot матрица (`money`/`life`, всеки с `slot 1`/`slot 2`, за да не се повтори държавата в същия pillar същия ден) е заменена с **4 отделни pillar-а, по едно видео всеки** — SLOT механизмът отпада изцяло (вече няма риск от колизия, защото всеки pillar се среща веднъж на ден):
+
+1. **`global_viral`** (бивш `money`) — пари, бизнес, икономика, tech/наука, изненадващи статистики. World Bank Open Data, разширен с 2 нови индикатора (интернет потребители %, R&D разходи % от БВП) за повече "tech/science" вариативност.
+2. **`global_data_story`** (бивш `life`) — продължителност на живота, щастие, работни часове. World Bank + Our World in Data, непроменен.
+3. **`real_estate_global`** (НОВ) — цени на имоти произволна държава (НЕ България). Източник: **Eurostat House Price Index** (`prc_hpi_a`, officially published, безплатен, без ключ API — потвърден жив на 2026-09-27), ~30 държави (EU/EEA/UK/Türkiye — реално ограничение на безплатните официални източници, US/Азия не са покрити).
+4. **`real_estate_sofia`** (НОВ) — винаги България (националният официален HPI, честно представен в narration-а като национален индекс, не Sofia-специфичен — няма безплатен официален Sofia district-level API). Единственото място, където ESTA.QUEST може да се появи — САМО като едно кратко, незадължително изречение в YouTube описанието (никога в hook/title/narration), и само ако звучи естествено за конкретния ден (Gemini промптът позволява да го пропусне, ако би звучало като реклама).
+
+**Важно за точност:** `pct_change` полето използва САМО index-level величини (2015=100, TOTAL/DW_NEW/DW_EXST — трите "purchase" варианта на Eurostat) — НЕ и Eurostat-ия "rate of change %" вариант, защото прекарването на вече-процентна стойност през същата pct_change формула би дало математически подвеждащо "процент от процент" число. Никога не се измислят/оценяват числа — всичко идва директно от официалния Eurostat API отговор.
+
+**Засегнати файлове** (всички локално тествани с реални API извиквания, `python3 -m py_compile` минава чисто): `.github/workflows/daily-short.yml` (матрица 4×1 вместо 2×2, cache key/artifact name без `slot`, `SLOT` env var премахнат навсякъде), `scripts/fetch_stat.py` (нов Eurostat fetch + real-estate candidate pools), `scripts/generate_script.py` (4 PILLAR_NAMES, real-estate-специфични промпт добавки, ESTA.QUEST логика само за `real_estate_sofia`), `scripts/render_chart.py` (4 accent цвята, `TEMPLATE_BY_PILLAR` вместо `TEMPLATE_BY_SLOT`, разширен `COUNTRY_NAMES`), `scripts/assemble_video.sh` (4-item pillar badge map), `scripts/upload_youtube.py` (4-item `PILLAR_TAGS`, без ESTA.QUEST/бранд таг — само в description-а).
+
+**recency_history.json** — старите записи (pillar `money`/`life`) просто спират да се match-ват с новите pillar имена; diversity паметта се рестартира чисто от 2026-09-27 нататък, без да се трие историята (просто вече не участва в exclusion логиката за старите имена).
+
+### Отворени въпроси (2026-09-27)
+- **Push към GitHub main чака Пепито потвърждение** — както на 08.09.2026, тази Cowork сесия няма write достъп до `statevpp/proof-in-numbers` (git proxy: "not in this session's authorized repository set"); нужен е или еднократно потвърждение в чата за push през Claude-in-Chrome browser automation (доказан работещ метод от 08.09), или Пепи да добави repo-то към сесийните "sources". Кодът е готов и тестван, чака само това.
+- Покритие на `real_estate_global`/`real_estate_sofia` е ограничено до Eurostat-овите ~30 държави (Европа + Türkiye) — ако Пепи иска чисто глобално покритие (US/Азия), трябва нов безплатен източник (не намерен работещ безплатен ключ-less API към 27.09.2026 — OECD.Stat старият SDMX-JSON endpoint е decommission-нат).
