@@ -436,5 +436,29 @@
     "pillar": "money",
     "country": "TR",
     "indicator_code": "FP.CPI.TOTL.ZG"
+  },
+  {
+    "date": "2026-09-28",
+    "pillar": "global_data_story",
+    "country": "AU",
+    "indicator_code": "happiness-cantril-ladder"
+  },
+  {
+    "date": "2026-09-28",
+    "pillar": "global_viral",
+    "country": "CN",
+    "indicator_code": "FP.CPI.TOTL.ZG"
+  },
+  {
+    "date": "2026-09-28",
+    "pillar": "real_estate_global",
+    "country": "IS",
+    "indicator_code": "TOTAL"
+  },
+  {
+    "date": "2026-09-28",
+    "pillar": "real_estate_sofia",
+    "country": "BG",
+    "indicator_code": "DW_EXST"
   }
 ]
