@@ -508,5 +508,29 @@
     "pillar": "real_estate_sofia",
     "country": "BG",
     "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-01",
+    "pillar": "global_data_story",
+    "country": "IN",
+    "indicator_code": "annual-working-hours-per-worker"
+  },
+  {
+    "date": "2026-10-01",
+    "pillar": "global_viral",
+    "country": "TR",
+    "indicator_code": "NY.GDP.PCAP.CD"
+  },
+  {
+    "date": "2026-10-01",
+    "pillar": "real_estate_global",
+    "country": "HU",
+    "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-01",
+    "pillar": "real_estate_sofia",
+    "country": "BG",
+    "indicator_code": "DW_EXST"
   }
 ]
