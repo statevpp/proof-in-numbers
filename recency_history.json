@@ -580,5 +580,29 @@
     "pillar": "real_estate_sofia",
     "country": "BG",
     "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-04",
+    "pillar": "global_data_story",
+    "country": "MX",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-10-04",
+    "pillar": "global_viral",
+    "country": "SA",
+    "indicator_code": "GC.TAX.TOTL.GD.ZS"
+  },
+  {
+    "date": "2026-10-04",
+    "pillar": "real_estate_global",
+    "country": "SI",
+    "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-04",
+    "pillar": "real_estate_sofia",
+    "country": "BG",
+    "indicator_code": "DW_EXST"
   }
 ]
