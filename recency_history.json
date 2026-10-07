@@ -652,5 +652,29 @@
     "pillar": "real_estate_sofia",
     "country": "BG",
     "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-07",
+    "pillar": "global_data_story",
+    "country": "BG",
+    "indicator_code": "happiness-cantril-ladder"
+  },
+  {
+    "date": "2026-10-07",
+    "pillar": "global_viral",
+    "country": "MX",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-10-07",
+    "pillar": "real_estate_global",
+    "country": "LT",
+    "indicator_code": "DW_NEW"
+  },
+  {
+    "date": "2026-10-07",
+    "pillar": "real_estate_sofia",
+    "country": "BG",
+    "indicator_code": "DW_EXST"
   }
 ]
