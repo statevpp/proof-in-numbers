@@ -1,29 +1,5 @@
 [
   {
-    "date": "2026-09-12",
-    "pillar": "life",
-    "country": "EG",
-    "indicator_code": "SP.DYN.LE00.IN"
-  },
-  {
-    "date": "2026-09-12",
-    "pillar": "life",
-    "country": "PL",
-    "indicator_code": "SP.DYN.LE00.IN"
-  },
-  {
-    "date": "2026-09-12",
-    "pillar": "money",
-    "country": "BG",
-    "indicator_code": "NY.GDP.PCAP.CD"
-  },
-  {
-    "date": "2026-09-12",
-    "pillar": "money",
-    "country": "JP",
-    "indicator_code": "NY.GDP.PCAP.CD"
-  },
-  {
     "date": "2026-09-13",
     "pillar": "life",
     "country": "MX",
@@ -697,6 +673,30 @@
   },
   {
     "date": "2026-10-11",
+    "pillar": "real_estate_sofia",
+    "country": "BG",
+    "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-12",
+    "pillar": "global_data_story",
+    "country": "BR",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-10-12",
+    "pillar": "global_viral",
+    "country": "CA",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-10-12",
+    "pillar": "real_estate_global",
+    "country": "HR",
+    "indicator_code": "TOTAL"
+  },
+  {
+    "date": "2026-10-12",
     "pillar": "real_estate_sofia",
     "country": "BG",
     "indicator_code": "DW_EXST"
