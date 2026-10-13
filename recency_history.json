@@ -1,29 +1,5 @@
 [
   {
-    "date": "2026-09-13",
-    "pillar": "life",
-    "country": "MX",
-    "indicator_code": "SP.DYN.LE00.IN"
-  },
-  {
-    "date": "2026-09-13",
-    "pillar": "life",
-    "country": "VN",
-    "indicator_code": "happiness-cantril-ladder"
-  },
-  {
-    "date": "2026-09-13",
-    "pillar": "money",
-    "country": "MX",
-    "indicator_code": "SH.XPD.OOPC.CH.ZS"
-  },
-  {
-    "date": "2026-09-13",
-    "pillar": "money",
-    "country": "US",
-    "indicator_code": "SH.XPD.OOPC.CH.ZS"
-  },
-  {
     "date": "2026-09-14",
     "pillar": "life",
     "country": "DE",
@@ -697,6 +673,30 @@
   },
   {
     "date": "2026-10-12",
+    "pillar": "real_estate_sofia",
+    "country": "BG",
+    "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-13",
+    "pillar": "global_data_story",
+    "country": "SA",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-10-13",
+    "pillar": "global_viral",
+    "country": "ZA",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-10-13",
+    "pillar": "real_estate_global",
+    "country": "EE",
+    "indicator_code": "TOTAL"
+  },
+  {
+    "date": "2026-10-13",
     "pillar": "real_estate_sofia",
     "country": "BG",
     "indicator_code": "DW_EXST"
