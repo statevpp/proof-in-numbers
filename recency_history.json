@@ -1,29 +1,5 @@
 [
   {
-    "date": "2026-09-21",
-    "pillar": "life",
-    "country": "CA",
-    "indicator_code": "happiness-cantril-ladder"
-  },
-  {
-    "date": "2026-09-21",
-    "pillar": "life",
-    "country": "MX",
-    "indicator_code": "SP.DYN.LE00.IN"
-  },
-  {
-    "date": "2026-09-21",
-    "pillar": "money",
-    "country": "IN",
-    "indicator_code": "GC.TAX.TOTL.GD.ZS"
-  },
-  {
-    "date": "2026-09-21",
-    "pillar": "money",
-    "country": "MX",
-    "indicator_code": "SL.UEM.TOTL.ZS"
-  },
-  {
     "date": "2026-09-22",
     "pillar": "life",
     "country": "EG",
@@ -697,6 +673,30 @@
   },
   {
     "date": "2026-10-20",
+    "pillar": "real_estate_sofia",
+    "country": "BG",
+    "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-21",
+    "pillar": "global_data_story",
+    "country": "NG",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-10-21",
+    "pillar": "global_viral",
+    "country": "FR",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-10-21",
+    "pillar": "real_estate_global",
+    "country": "PL",
+    "indicator_code": "TOTAL"
+  },
+  {
+    "date": "2026-10-21",
     "pillar": "real_estate_sofia",
     "country": "BG",
     "indicator_code": "DW_EXST"
