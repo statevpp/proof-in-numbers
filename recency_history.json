@@ -1,29 +1,5 @@
 [
   {
-    "date": "2026-09-23",
-    "pillar": "life",
-    "country": "AU",
-    "indicator_code": "SP.DYN.LE00.IN"
-  },
-  {
-    "date": "2026-09-23",
-    "pillar": "life",
-    "country": "JP",
-    "indicator_code": "SP.DYN.LE00.IN"
-  },
-  {
-    "date": "2026-09-23",
-    "pillar": "money",
-    "country": "FR",
-    "indicator_code": "SH.XPD.OOPC.CH.ZS"
-  },
-  {
-    "date": "2026-09-23",
-    "pillar": "money",
-    "country": "ZA",
-    "indicator_code": "SH.XPD.OOPC.CH.ZS"
-  },
-  {
     "date": "2026-09-24",
     "pillar": "life",
     "country": "FR",
@@ -697,6 +673,30 @@
   },
   {
     "date": "2026-10-22",
+    "pillar": "real_estate_sofia",
+    "country": "BG",
+    "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-23",
+    "pillar": "global_data_story",
+    "country": "DE",
+    "indicator_code": "annual-working-hours-per-worker"
+  },
+  {
+    "date": "2026-10-23",
+    "pillar": "global_viral",
+    "country": "US",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-10-23",
+    "pillar": "real_estate_global",
+    "country": "CZ",
+    "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-23",
     "pillar": "real_estate_sofia",
     "country": "BG",
     "indicator_code": "DW_EXST"
