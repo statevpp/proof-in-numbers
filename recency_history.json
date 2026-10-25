@@ -1,11 +1,5 @@
 [
   {
-    "date": "2026-09-25",
-    "pillar": "life",
-    "country": "DE",
-    "indicator_code": "annual-working-hours-per-worker"
-  },
-  {
     "date": "2026-09-26",
     "pillar": "life",
     "country": "IN",
@@ -697,6 +691,30 @@
   },
   {
     "date": "2026-10-24",
+    "pillar": "real_estate_sofia",
+    "country": "BG",
+    "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-25",
+    "pillar": "global_data_story",
+    "country": "IN",
+    "indicator_code": "annual-working-hours-per-worker"
+  },
+  {
+    "date": "2026-10-25",
+    "pillar": "global_viral",
+    "country": "NG",
+    "indicator_code": "SH.XPD.OOPC.CH.ZS"
+  },
+  {
+    "date": "2026-10-25",
+    "pillar": "real_estate_global",
+    "country": "TR",
+    "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-10-25",
     "pillar": "real_estate_sofia",
     "country": "BG",
     "indicator_code": "DW_EXST"
