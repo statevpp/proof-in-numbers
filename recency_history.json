@@ -1,29 +1,5 @@
 [
   {
-    "date": "2026-10-07",
-    "pillar": "global_data_story",
-    "country": "BG",
-    "indicator_code": "happiness-cantril-ladder"
-  },
-  {
-    "date": "2026-10-07",
-    "pillar": "global_viral",
-    "country": "MX",
-    "indicator_code": "SH.XPD.OOPC.CH.ZS"
-  },
-  {
-    "date": "2026-10-07",
-    "pillar": "real_estate_global",
-    "country": "LT",
-    "indicator_code": "DW_NEW"
-  },
-  {
-    "date": "2026-10-07",
-    "pillar": "real_estate_sofia",
-    "country": "BG",
-    "indicator_code": "DW_EXST"
-  },
-  {
     "date": "2026-10-08",
     "pillar": "global_data_story",
     "country": "JP",
@@ -715,6 +691,30 @@
   },
   {
     "date": "2026-11-05",
+    "pillar": "real_estate_sofia",
+    "country": "BG",
+    "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-11-06",
+    "pillar": "global_data_story",
+    "country": "IN",
+    "indicator_code": "annual-working-hours-per-worker"
+  },
+  {
+    "date": "2026-11-06",
+    "pillar": "global_viral",
+    "country": "DE",
+    "indicator_code": "GC.TAX.TOTL.GD.ZS"
+  },
+  {
+    "date": "2026-11-06",
+    "pillar": "real_estate_global",
+    "country": "ES",
+    "indicator_code": "TOTAL"
+  },
+  {
+    "date": "2026-11-06",
     "pillar": "real_estate_sofia",
     "country": "BG",
     "indicator_code": "DW_EXST"
