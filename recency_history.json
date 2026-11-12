@@ -1,29 +1,5 @@
 [
   {
-    "date": "2026-10-12",
-    "pillar": "global_data_story",
-    "country": "BR",
-    "indicator_code": "SP.DYN.LE00.IN"
-  },
-  {
-    "date": "2026-10-12",
-    "pillar": "global_viral",
-    "country": "CA",
-    "indicator_code": "SH.XPD.OOPC.CH.ZS"
-  },
-  {
-    "date": "2026-10-12",
-    "pillar": "real_estate_global",
-    "country": "HR",
-    "indicator_code": "TOTAL"
-  },
-  {
-    "date": "2026-10-12",
-    "pillar": "real_estate_sofia",
-    "country": "BG",
-    "indicator_code": "DW_EXST"
-  },
-  {
     "date": "2026-10-13",
     "pillar": "global_data_story",
     "country": "SA",
@@ -718,5 +694,29 @@
     "pillar": "real_estate_sofia",
     "country": "BG",
     "indicator_code": "DW_EXST"
+  },
+  {
+    "date": "2026-11-12",
+    "pillar": "global_data_story",
+    "country": "JP",
+    "indicator_code": "SP.DYN.LE00.IN"
+  },
+  {
+    "date": "2026-11-12",
+    "pillar": "global_viral",
+    "country": "SA",
+    "indicator_code": "GC.TAX.TOTL.GD.ZS"
+  },
+  {
+    "date": "2026-11-12",
+    "pillar": "real_estate_global",
+    "country": "SI",
+    "indicator_code": "DW_NEW"
+  },
+  {
+    "date": "2026-11-12",
+    "pillar": "real_estate_sofia",
+    "country": "BG",
+    "indicator_code": "TOTAL"
   }
 ]
