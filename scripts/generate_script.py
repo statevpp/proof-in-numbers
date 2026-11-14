@@ -28,7 +28,7 @@ import google_genai_helper as gh
 PILLAR_NAMES = {
     "global_viral": "Global Viral",
     "global_data_story": "Global Data Story",
-    "real_estate_global": "Real Estate Intelligence",
+    "real_estate_global": "Global Housing Data",
     "real_estate_sofia": "Sofia Property Intelligence",
 }
 
@@ -46,32 +46,15 @@ home here got X% more expensive" sentence, using the percent-change number
 already given in the raw stat.
 """
 
-# Appended ONLY for pillar "real_estate_sofia" — the ONE pillar where a
-# brief, natural ESTA.QUEST mention belongs (2026-09-27 strategy: "ESTA.QUEST
-# should NOT be inserted as an artificial advertisement into every video...
-# may be mentioned briefly or used as a subtle CTA, but never at the expense
-# of the video's entertainment/information value"). Deliberately placed in
-# the "description" field only, NEVER in the hook/narration/title — so the
-# spoken video itself stays 100% pure entertainment/information and the
-# mention only shows up as one soft, optional line in the YouTube
-# description below the video, exactly like a footnote/credit, not an ad
-# read. Gemini is told this is OPTIONAL so a day where it doesn't fit
-# naturally can just skip it rather than forcing something salesy.
+# Appended ONLY for pillar "real_estate_sofia". Honesty rule: the data is
+# Bulgaria's national house-price index, not a Sofia-only figure.
+# (2026-11-14: the optional ESTA.QUEST description sentence was removed by
+# owner decision — PIN content no longer promotes any other project.)
 REAL_ESTATE_SOFIA_EXTRA = """
 This is Bulgaria's official nationwide house-price data — mention in the
 narration that Sofia (the capital) drives a large share of this national
 market, but do NOT claim this number IS a Sofia-only figure (it isn't —
 be honest that it's the national index).
-
-For the "description" field ONLY (never in hook/title/narration): after
-the required 2-3 sentences crediting the data source, you MAY optionally
-add ONE short, natural, non-salesy sentence mentioning that ESTA.QUEST
-(a Sofia property resource) can help viewers interested in the Sofia
-market explore current listings or values — but ONLY if it reads as a
-genuinely helpful footnote, never as an ad. If it would feel forced or
-salesy for this specific stat, skip it entirely and just write the normal
-2-3 sentence description. Never mention ESTA.QUEST anywhere except
-optionally in this one description sentence.
 """
 
 # Raw academic/technical terms that must NEVER survive into what the viewer
@@ -95,7 +78,7 @@ economists or data nerds.
 The channel publishes 4 videos/day across four content pillars:
 - "Global Viral": money, business, economy, tech/science — surprising stats
 - "Global Data Story": sleep, happiness, work hours, life expectancy
-- "Real Estate Intelligence": housing prices anywhere in the world
+- "Global Housing Data": housing prices anywhere in the world
 - "Sofia Property Intelligence": Bulgaria's housing market, for Sofia buyers/sellers
 
 This stat belongs to the "{pillar_name}" pillar.

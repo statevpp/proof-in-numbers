@@ -84,9 +84,33 @@ jobs:
           key: daily-short-${{ steps.date.outputs.today }}-${{ matrix.pillar }}
 
       - name: Install ffmpeg
-        # ubuntu-latest does NOT ship ffmpeg by default — confirmed failure
-        # mode in the Lumaris pipeline (exit 127, "command not found").
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        # ubuntu-latest does NOT ship ffmpeg by default (without this step:
+        # exit 127, "command not found").
+        # 2026-11-14: hard time limits + bounded retries. On 2026-11-11 (run
+        # #94) apt hung ~2h on unreachable Ubuntu mirrors and the day was
+        # lost; now each attempt is capped, at most 3 attempts, and the step
+        # can never run longer than 20 minutes — it fails fast with a clear
+        # error instead of blocking the workflow for hours.
+        timeout-minutes: 20
+        run: |
+          set -uo pipefail
+          APT_OPTS="-o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30"
+          for attempt in 1 2 3; do
+            echo "ffmpeg install attempt $attempt/3"
+            if sudo timeout 120 apt-get $APT_OPTS update \
+               && sudo timeout 240 apt-get $APT_OPTS install -y ffmpeg; then
+              if command -v ffmpeg >/dev/null 2>&1 && ffmpeg -version >/dev/null 2>&1; then
+                ffmpeg -version | head -n 1 || true
+                exit 0
+              fi
+              echo "::error::apt reported success but ffmpeg is not installed or not executable — stopping this job"
+              exit 1
+            fi
+            echo "::warning::ffmpeg install attempt $attempt/3 failed"
+            if [ "$attempt" -lt 3 ]; then sleep 20; fi
+          done
+          echo "::error::ffmpeg installation failed after 3 attempts (apt mirrors unreachable or install error) — stopping this job"
+          exit 1
 
       - name: Set up Python
         uses: actions/setup-python@v5

@@ -15,7 +15,7 @@ STRATEGY — ESTA.QUEST INTEGRATION" directive:
   tech/science, surprising World Bank stats — was "money")
 - "global_data_story"   -> "Global Data Story"     (life expectancy,
   happiness, work hours — was "life")
-- "real_estate_global"  -> "Real Estate Intelligence" (NEW — house-price
+- "real_estate_global"  -> "Global Housing Data" (NEW — house-price
   trends for a random country OTHER than Bulgaria, broad global appeal)
 - "real_estate_sofia"   -> "Sofia Property Intelligence" (NEW — Bulgaria's
   official house-price index, framed for Sofia buyers/sellers; the ONLY
