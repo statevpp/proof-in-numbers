@@ -709,6 +709,12 @@
   },
   {
     "date": "2026-11-19",
+    "pillar": "real_estate_global",
+    "country": "CZ",
+    "indicator_code": "TOTAL"
+  },
+  {
+    "date": "2026-11-19",
     "pillar": "real_estate_sofia",
     "country": "BG",
     "indicator_code": "DW_EXST"
