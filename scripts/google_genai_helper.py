@@ -88,15 +88,21 @@ def generate_speech_pcm(text: str, voice: str = None) -> bytes:
     )
     inline = resp["candidates"][0]["content"]["parts"][0]["inlineData"]
     mime = inline.get("mimeType", "")
-    if "L16" not in mime:
-        raise RuntimeError(f"Unexpected TTS mimeType: {mime} (expected raw PCM L16)")
+    if "L16" not in mime and "wav" not in mime.lower():
+        raise RuntimeError(f"Unexpected TTS mimeType: {mime} (expected audio/wav or raw PCM L16)")
     return base64.b64decode(inline["data"])
 
 
 def write_wav(pcm_bytes: bytes, out_path: str, sample_rate: int = 24000,
               channels: int = 1, sample_width: int = 2) -> None:
-    """Wraps raw PCM bytes in a standard WAV header. stdlib `wave` module
-    handles this correctly — no manual byte-packing needed."""
+    """Writes audio bytes to a WAV file. If pcm_bytes already has a RIFF/WAVE
+    header (e.g. audio/wav from Gemini TTS), writes it directly; otherwise
+    wraps raw PCM bytes in a standard WAV header."""
+    if pcm_bytes[:4] == b"RIFF" and pcm_bytes[8:12] == b"WAVE":
+        with open(out_path, "wb") as f:
+            f.write(pcm_bytes)
+        return
+
     import wave
 
     with wave.open(out_path, "wb") as wf:
